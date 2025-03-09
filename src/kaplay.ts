@@ -2,7 +2,7 @@ import kaplay, { Vec2 } from "kaplay";
 // import "kaplay/global"; // uncomment if you want to use without the k. prefix
 
 export const k = kaplay({
-    width: 600,
+    width: 1000,
     height: 600,
 });
 
@@ -18,15 +18,16 @@ k.loadSprite("backs", "/sprites/backs.png", {
     sliceY: 5,
 })
 
+k.loadSprite("lines", "/sprites/lines.png");
+
+k.loadFont("font", "/fonts/m6x11.ttf");
+
 k.loadShader(
     "balatro",
     null,
 `#define SPIN_ROTATION -2.0
-#define SPIN_SPEED 7.0
+#define SPIN_SPEED 3.0
 #define OFFSET vec2(-0.35)
-#define COLOUR_1 vec4(0.871, 0.267, 0.231, 1.0)
-#define COLOUR_2 vec4(0.0, 0.42, 0.706, 1.0)
-#define COLOUR_3 vec4(0.086, 0.137, 0.145, 1.0)
 #define CONTRAST 3.5
 #define LIGTHING 0.4
 #define SPIN_AMOUNT 0.25
@@ -34,6 +35,14 @@ k.loadShader(
 #define SPIN_EASE 1.0
 #define PI 3.14159265359
 #define IS_ROTATE false
+
+uniform vec3 SET_COLOR_1;
+uniform vec3 SET_COLOR_2;
+uniform vec3 SET_COLOR_3;
+
+#define COLOUR_1 vec4(SET_COLOR_1/255.0, 1.0)
+#define COLOUR_2 vec4(SET_COLOR_2/255.0, 1.0)
+#define COLOUR_3 vec4(SET_COLOR_3/255.0, 1.0)
 
 uniform float iTime;
 uniform vec2 iResolution;
@@ -68,7 +77,7 @@ vec4 effect(vec2 screenSize, vec2 screen_coords) {
     float c2p = max(0.,1. - contrast_mod*abs(paint_res));
     float c3p = 1. - min(1., c1p + c2p);
     float light = (LIGTHING - 0.2)*max(c1p*5. - 4., 0.) + LIGTHING*max(c2p*5. - 4., 0.);
-    return (0.3/CONTRAST)*COLOUR_1 + (1. - 0.3/CONTRAST)*(COLOUR_1*c1p + COLOUR_2*c2p + vec4(c3p*COLOUR_3.rgb, c3p*COLOUR_1.a)) + light;
+    return (0.3/CONTRAST)*(COLOUR_1) + (1. - 0.3/CONTRAST)*(COLOUR_1*c1p + COLOUR_2*c2p + vec4(c3p*COLOUR_3.rgb, c3p*COLOUR_1.a));
 }
 
 vec4 frag(vec2 pos, vec2 uva, vec4 color, sampler2D tex) {

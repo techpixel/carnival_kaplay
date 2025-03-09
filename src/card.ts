@@ -4,15 +4,15 @@ import { KAPLAYCtx, Vec2, TweenController, MouseButton } from "kaplay";
 
 import cardData from './cards.json';
 
-export const drawVec = new k.Vec2(100, 100);
-export const discardVec = new k.Vec2(500, 100);
+export const CARD_WIDTH = 71;
+export const CARD_HEIGHT = 95;
 
 export function createCard(pos: Vec2) {
     return k.add([
         k.sprite("backs", {
             frame: 0
         }),
-        k.scale(),
+        k.scale(1.25),
         k.pos(pos),
         k.rotate(0),
         k.area(),
@@ -76,14 +76,14 @@ export class Card {
         this.obj = createCard(pos);
     }
 
-    async move(pos: Vec2, time = 1): Promise<void> {
+    async move(x: number, y: number, time = 1, easing = k.easings.easeOutSine): Promise<void> {
         return this.anims.push(
             this.obj.tween(
                 this.obj.pos,
-                pos,
+                k.vec2(x + CARD_WIDTH/2, y - CARD_HEIGHT/2),
                 time,
                 (val) => this.obj.pos = val,
-                k.easings.easeOutSine,
+                easing,
             )
         );
     }
@@ -100,14 +100,14 @@ export class Card {
         )
     }
 
-    async rotate(angle: number, time = 1): Promise<void> {
+    async rotate(angle: number, time = 1, easing = k.easings.easeOutSine): Promise<void> {
         return this.anims.push(
             this.obj.tween(
                 this.obj.angle,
                 angle,
                 time,
                 (val) => this.obj.angle = val,
-                k.easings.easeOutSine,
+                easing,
             )
         );
     }
