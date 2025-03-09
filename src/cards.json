@@ -1,0 +1,166 @@
+{
+    "cards": [
+        {
+            "name": "ascii",
+            "modifier": {
+              "adjectives": "ascii"
+            }
+        },
+        {
+            "name": "🚫🔤",
+            "modifier": {
+              "have": "no words, only icons"
+            }
+        },
+        {
+            "name": "sock joker",
+            "description": "earn a (single) sock",
+            "modifier": {
+              "blessing": "earn a sock"
+            }
+        },
+        {
+            "name": "jokersaurus",
+            "description": "include orpheus in your project",
+            "modifier": {
+              "include": "orpheus"
+            }
+        },
+        {
+            "name": "trash joker",
+            "description": "include a raccoon in your project",
+            "modifier": {
+              "include": "a raccoon",
+              "curse": "fail the challenge and your slack will be flooded with raccoon emojis"
+            }
+        },
+        {
+            "name": "rat joker",
+            "description": "change slack profile pictures",
+            "modifier": {
+              "have": "change user slack profile pictures"
+            }
+        },
+        {
+            "name": "joker with a sparkledog oc",
+            "modifier": {
+              "adjectives": "early 2000s web design"
+            }
+        },
+        {
+            "name": "hitchhiker",
+            "description": "earn a sticker for every unique user",
+            "modifier": {
+              "blessing": "earn a sticker for every unique user"
+            }
+        },
+        {
+            "name": "seeing double",
+            "description": "2x the blessing to the left of this card",
+            "modifier": {
+              "blessing": "2x the blessing to the left of this card"
+            }
+        },
+        {
+            "name": "greed",
+            "description": "use python in your project",
+            "modifier": {
+              "have": "python"
+            }
+        },
+        {
+            "name": "wrath",
+            "description": "use rust in your project",
+            "modifier": {
+              "have": "rust"
+            }
+        },
+        {
+            "name": "envy",
+            "description": "use typescript in your project",
+            "modifier": {
+              "have": "typescript"
+            }
+        },
+        {
+            "name": "sloth",
+            "description": "use javascript in your project",
+            "modifier": {
+              "have": "javascript"
+            }
+        },
+        {
+            "name": "pride",
+            "description": "use ruby in your project",
+            "modifier": {
+              "have": "ruby"
+            }
+        },
+        {
+            "name": "dulingo joker",
+            "description": "use a language you haven't used before",
+            "modifier": {
+              "have": "a language you haven't used before"
+            }
+        },
+        {
+            "name": "bjf",
+            "description": "your project must be local or online multi-user",
+            "modifier": {
+              "have": "local or online multi-user"
+            }
+        },
+        {
+            "name": "polaroid",
+            "description": "your project must be a photo booth",
+            "modifier": {
+              "have": "camera"
+            }
+        },
+        {
+            "name": "[joker Joker]",
+            "description": "your whole project must fit inside a single js object",
+            "modifier": {
+              "language": "javascript/typescript",
+              "blessing": "get a js sticker"
+            }
+        },
+        {
+            "name": "micro joker",
+            "description": "your project must be under 3kb",
+            "modifier": {
+              "have": "under 3kb",
+              "curse": "fail the challenge and your be sent a floppy disk",
+              "blessing": "get a micro-sd card"
+            }
+        },
+        {
+            "name": "scratch-off joker",
+            "description": "your project should involve gambling",
+            "modifier": {
+              "have": "gambling"
+            }
+        },
+        {
+            "name": "white rabbit",
+            "description": "use time tracking in your project",
+            "modifier": {
+              "include": "time tracking"
+            }
+        },
+        {
+            "name": "forgetful joker",
+            "description": "remove the curse of the card to the left of this card",
+            "modifier": {
+              "blessing": "forget any curse to the left of this card"
+            }
+        },
+        {
+            "name": "uno joker",
+            "description": "only have 1 button",
+            "modifier": {
+              "have": "1 button"
+            }
+        }
+    ]
+}

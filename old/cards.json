@@ -1,0 +1,55 @@
+{
+    "themes": {
+        "ascii": {
+            "description": "use only ascii characters",
+            "color": "#02b3e4"
+        },
+        "mid-2000s cheese": {
+            "description": "think of the cheesiest things from the mid-2000s",
+            "color": "#ffbe30"
+        },
+        "spells": {
+            "description": "use spells and magic",
+            "color": "#9f3eff"
+        },
+        "trashy": {
+            "description": "make it trashy",
+            "color": "#636a65"
+        },
+        "batteries included": {
+            "description": "make it so that it's easy to get started",
+            "color": "#80792b"
+        },
+        "terminal ui": {
+            "description": "make it look like a terminal",
+            "color": "#98eb00"
+        },
+        "aesthetic": {
+            "description": "a e s t h e t i c",
+            "color": "#deb2d7"
+        },
+        "90s pop": {
+            "description": "think of the cheesiest things from the 90s",
+            "color": "#de007d"
+        },
+        "dial-up": {
+            "description": "make it look like it's from the dial-up era",
+            "color": "#487bc7"
+        },
+        "iconic": {
+            "description": "no words, only icons",
+            "color": "#93c79b"
+        },
+        "orpheus mode": {
+            "description": "orpheus themed!!!",
+            "color": "#c5c7ba"
+        },
+        "heidi mode": {
+            "description": "heidi themed!!! *twitch twitch*",
+            "color": "#c5c7ba"
+        }
+    },
+    "cards": [
+        "websockets"
+    ]
+}
