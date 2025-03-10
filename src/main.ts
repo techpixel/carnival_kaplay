@@ -370,13 +370,17 @@ k.scene("balatroui", () => {
     const hand = [];
 
     drawPile.onClick(async () => {
+        let currentlyHovering: Card | null = null;
+
         for (let i = 0; i < 7; i++) {
             const card = new Card("Joker", k.vec2(DECK_X - CARD_WIDTH/2, DECK_Y - CARD_HEIGHT/2));
 
+            card.flags.parentSlot = i;
+
             await Promise.all([
                 card.move(
-                    LEFT + INFOBAR_WIDTH + BIG_SPACER + (i * (CARD_WIDTH - 8)) + 16, 
-                    BOTTOM - BUTTON_HEIGHT - SPACER,
+                    LEFT + INFOBAR_WIDTH + BIG_SPACER + (i * (CARD_WIDTH - 8)) + 16 + CARD_WIDTH/2, 
+                    BOTTOM - BUTTON_HEIGHT - SPACER + (i - 3)**2 - CARD_HEIGHT/2,
                     0.5,
                     k.easings.easeOutExpo
                 ),
@@ -386,11 +390,63 @@ k.scene("balatroui", () => {
                     card.obj.sprite = "jokers";
                     // card.obj.frame = k.randi(0, 10);
                     await card.scale(k.vec2(1.5, 1.5), 0.25, k.easings.easeOutExpo);
-                    console.log('flippined yo ');
 
                     return true;
                 })()
             ])
+
+            const focus = async () => {
+                card.fade(k.rgb(200, 200, 200), 0.5, k.easings.easeOutExpo);
+            };
+
+            const unfocus = async () => {  
+                card.fade(k.rgb(255, 255, 255), 0.5, k.easings.easeOutExpo);
+            }
+
+            // this is a really bad workaround - i don't want to have to do the math while it's hovering. but it's fine for now
+            card.obj.onHoverUpdate(async () => {
+                if (currentlyHovering) {
+                    if (currentlyHovering === card) {
+                        return;                
+                    } else if (card.flags.parentSlot > currentlyHovering.flags.parentSlot) {
+                        currentlyHovering = card;
+                        await focus();
+                    } else {
+                        await unfocus();
+                    }
+                } else {
+                    currentlyHovering = card;
+                    await focus();
+                }
+            });
+
+            card.obj.onHoverEnd(async () => {
+                if (currentlyHovering === card) {
+                    currentlyHovering = null;
+                }
+
+                await unfocus();
+            });
+
+            const click = async () => {
+                if (card.flags.selected) {
+                    card.flags.selected = false;
+
+                    await card.move(card.obj.pos.x, card.obj.pos.y + 50, 0.5, k.easings.easeOutExpo);
+                } else {
+                    card.flags.selected = true;
+
+                    await card.move(card.obj.pos.x, card.obj.pos.y - 50, 0.5, k.easings.easeOutExpo);
+                }
+            }
+
+            card.onClick(async () => {
+                console.log('click!');
+
+                if (card === currentlyHovering) {
+                    await click();
+                }
+            });
         }
     });
 

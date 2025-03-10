@@ -1,6 +1,6 @@
 import { time } from "console";
 import { k } from "./kaplay";
-import { KAPLAYCtx, Vec2, TweenController, MouseButton } from "kaplay";
+import { Vec2, TweenController, MouseButton, Color } from "kaplay";
 
 import cardData from './cards.json';
 
@@ -19,7 +19,8 @@ export function createCard(pos: Vec2) {
         k.color(),
         k.timer(),
         k.anchor("center"),
-        "card",
+        k.z(0),
+        // "card",
     ]);
 }
 
@@ -37,18 +38,17 @@ Pretty much:
 
 */
 export class AnimationManager {
-    public animId: number = 0;
-    public anims: { [id: number]: TweenController } = {};
+    // public animId: number = 0;
+    // public anims: { [id: number]: TweenController } = {};
 
     async push(anim: TweenController): Promise<void> {
-        const newId = this.animId++;
+        // const newId = this.animId++;
 
-        this.anims[newId] = anim;
-
+        // this.anims[newId] = anim;
 
         return new Promise((resolve) => {
             anim.onEnd(() => {
-                delete this.anims[newId];
+                // delete this.anims[newId];
                 resolve();
             });
         });
@@ -62,9 +62,9 @@ export class Card {
         animLock: false,
         active: false, // card can be used in the game space
 
-        flipped: false,
-        held: false,
-        location: "draw" as "draw" | "deck"
+        selected: false,
+
+        parentSlot: 0,
     };
 
     public anims: AnimationManager = new AnimationManager();
@@ -80,7 +80,7 @@ export class Card {
         return this.anims.push(
             this.obj.tween(
                 this.obj.pos,
-                k.vec2(x + CARD_WIDTH/2, y - CARD_HEIGHT/2),
+                k.vec2(x, y),
                 time,
                 (val) => this.obj.pos = val,
                 easing,
@@ -112,6 +112,46 @@ export class Card {
         );
     }
 
+    async pulse(color: Color, time = 1, easing = k.easings.easeOutSine): Promise<void> {
+        const initColor = this.obj.color;
+
+        return new Promise((resolve) =>
+            this.obj.tween(
+                this.obj.color,
+                color,
+                time,
+                (val) => this.obj.color = val,
+                easing,
+            ).onEnd(() => {
+                this.obj.tween(
+                    this.obj.color,
+                    initColor,
+                    time,
+                    (val) => this.obj.color = val,
+                    easing,
+                );
+
+                resolve();
+            })
+        );
+    }
+
+    async fade(color: Color, time = 1, easing = k.easings.easeOutSine): Promise<void> {
+        const initColor = this.obj.color;
+
+        return this.anims.push(
+            this.obj.tween(
+                this.obj.color,
+                color,
+                time,
+                (val) => this.obj.color = val,
+                easing,
+            )
+        );
+    }
+
+    //event wrappers
+
     onHover(cb: () => void) {
         this.obj.onHover(() => {
             if (this.flags.animLock) return;
@@ -131,7 +171,7 @@ export class Card {
     onClick(cb: () => void) {
         this.obj.onClick(() => {
             if (this.flags.animLock) return;
-            if (!this.flags.active) return;
+            // if (!this.flags.active) return;
 
             cb();
         });
