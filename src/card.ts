@@ -7,21 +7,12 @@ import cardData from './cards.json';
 export const CARD_WIDTH = 71;
 export const CARD_HEIGHT = 95;
 
-export function createCard(pos: Vec2) {
-    return k.add([
-        k.sprite("backs", {
-            frame: 0
-        }),
-        k.scale(1.25),
-        k.pos(pos),
-        k.rotate(0),
-        k.area(),
-        k.color(),
-        k.timer(),
-        k.anchor("center"),
-        k.z(0),
-        // "card",
-    ]);
+export const jokers: {
+    [key: string]: typeof cardData.cards[0];
+} = {};
+
+for (const card of cardData.cards) {
+    jokers[card.name] = card;
 }
 
 export function randomJoker() {
@@ -29,55 +20,52 @@ export function randomJoker() {
     return card;
 }
 
-/*
-
-Pretty much:
-- i want to allow multiple animations to be queued or run at the same time
-- i want to be able to wait for an animation to finish before doing something else
-- i want to be able to stop a playing animation
-
-*/
-export class AnimationManager {
-    // public animId: number = 0;
-    // public anims: { [id: number]: TweenController } = {};
-
-    async push(anim: TweenController): Promise<void> {
-        // const newId = this.animId++;
-
-        // this.anims[newId] = anim;
-
-        return new Promise((resolve) => {
-            anim.onEnd(() => {
-                // delete this.anims[newId];
-                resolve();
-            });
-        });
-    }
+function waitTween(tween: TweenController): Promise<void> {
+    return new Promise((resolve) => tween.onEnd(() => resolve()));
 }
 
 export class Card {
-    public obj: ReturnType<typeof createCard>;
+    public obj: ReturnType<typeof this.createCard>;
 
     public flags = {
         animLock: false,
         active: false, // card can be used in the game space
 
         selected: false,
+        dragging: false,
 
         parentSlot: 0,
     };
 
-    public anims: AnimationManager = new AnimationManager();
-
-    constructor(
-        public card: string,
+    private createCard(
+        joker: string,
         pos: Vec2,
     ) {
-        this.obj = createCard(pos);
+        return k.add([
+            k.sprite("backs", {
+                frame: jokers[joker].frame,
+            }),
+            k.scale(1.25),
+            k.pos(pos),
+            k.rotate(0),
+            k.area(),
+            k.color(),
+            k.timer(),
+            k.anchor("center"),
+            k.z(0),
+            // "card",
+        ]);
+    }
+
+    constructor(
+        public joker: string,
+        pos: Vec2,
+    ) {
+        this.obj = this.createCard(joker, pos);
     }
 
     async move(x: number, y: number, time = 1, easing = k.easings.easeOutSine): Promise<void> {
-        return this.anims.push(
+        return waitTween(
             this.obj.tween(
                 this.obj.pos,
                 k.vec2(x, y),
@@ -89,7 +77,7 @@ export class Card {
     }
 
     async scale(scale: Vec2, time = 1, easing = k.easings.easeOutSine): Promise<void> {
-        return this.anims.push(
+        return waitTween(
             this.obj.tween(
                 this.obj.scale,
                 scale,
@@ -101,7 +89,7 @@ export class Card {
     }
 
     async rotate(angle: number, time = 1, easing = k.easings.easeOutSine): Promise<void> {
-        return this.anims.push(
+        return waitTween(
             this.obj.tween(
                 this.obj.angle,
                 angle,
@@ -139,7 +127,7 @@ export class Card {
     async fade(color: Color, time = 1, easing = k.easings.easeOutSine): Promise<void> {
         const initColor = this.obj.color;
 
-        return this.anims.push(
+        return waitTween(
             this.obj.tween(
                 this.obj.color,
                 color,
@@ -193,5 +181,76 @@ export class Card {
 
             cb(mouse);
         });
+    }
+}
+
+// do the math to automatically determine the position of the cards within the hand
+export class Hand {
+    public cards: Card[] = [];
+
+    constructor(
+        public pos: Vec2,
+        public width: number,
+    ) {}
+
+    async moveCards() {
+        const len = this.cards.length;
+
+        // equally distribute the cards in the hand
+        const spacing = (this.width - CARD_WIDTH * len) / (len + 1);
+
+        // move all cards
+        for (let i = 0; i < len; i++) {
+            const card = this.cards[i];
+
+            card.move(
+                this.pos.x + spacing * (i + 1) + CARD_WIDTH / 2 + CARD_WIDTH * i,
+                this.pos.y - CARD_HEIGHT / 2 + (i - len/2 + 0.5) ** 2,
+                1 / 4,
+                k.easings.easeOutExpo
+            )
+            card.rotate((i - len/2) * 2, 1 / 4, k.easings.easeOutExpo)
+
+            card.obj.z = i / len;
+            card.flags.parentSlot = i;
+        }
+    }
+
+    async addCard(card: Card, slot: number = -1) {
+        if (slot !== -1) {
+            this.cards.splice(slot, 0, card);
+        } else {
+            this.cards.push(card);
+        }
+
+        await this.moveCards();
+    }
+
+    async removeCard(card: Card, dest: Vec2, destroy: boolean = true) {
+        // remove the card from the hand
+        this.cards = this.cards.filter((c) => c !== card);
+
+        if (destroy) {
+            // move the card to the pile
+            await Promise.all([
+                card.move(
+                    dest.x - CARD_WIDTH / 2,
+                    dest.y - CARD_HEIGHT / 2,
+                    1 / 4, 
+                    k.easings.easeOutExpo
+                ),
+                card.rotate(0, 1 / 4, k.easings.easeOutExpo),
+                (async () => {
+                    await card.scale(k.vec2(0, 1.25), 1 / 8, k.easings.easeInSine);
+                    card.obj.sprite = "backs";
+                    // card.obj.frame = k.randi(0, 10);
+                    await card.scale(k.vec2(1.25, 1.25), 1 / 8, k.easings.easeOutExpo);
+                })()
+            ])
+
+            card.obj.destroy();
+        }
+
+        await this.moveCards();
     }
 }

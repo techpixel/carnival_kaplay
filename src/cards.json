@@ -4,27 +4,31 @@
             "name": "ascii",
             "modifier": {
               "adjectives": "ascii"
-            }
+            },
+            "frame": 0
         },
         {
             "name": "🚫🔤",
             "modifier": {
               "have": "no words, only icons"
-            }
+            },
+            "frame": 1
         },
         {
             "name": "sock joker",
             "description": "earn a (single) sock",
             "modifier": {
               "blessing": "earn a sock"
-            }
+            },
+            "frame": 2
         },
         {
             "name": "jokersaurus",
             "description": "include orpheus in your project",
             "modifier": {
               "include": "orpheus"
-            }
+            },
+            "frame": 3
         },
         {
             "name": "trash joker",
@@ -32,90 +36,103 @@
             "modifier": {
               "include": "a raccoon",
               "curse": "fail the challenge and your slack will be flooded with raccoon emojis"
-            }
+            },
+            "frame": 4
         },
         {
             "name": "rat joker",
             "description": "change slack profile pictures",
             "modifier": {
               "have": "change user slack profile pictures"
-            }
+            },
+            "frame": 5
         },
         {
             "name": "joker with a sparkledog oc",
             "modifier": {
               "adjectives": "early 2000s web design"
-            }
+            },
+            "frame": 6
         },
         {
             "name": "hitchhiker",
             "description": "earn a sticker for every unique user",
             "modifier": {
               "blessing": "earn a sticker for every unique user"
-            }
+            },
+            "frame": 23
         },
         {
             "name": "seeing double",
             "description": "2x the blessing to the left of this card",
             "modifier": {
               "blessing": "2x the blessing to the left of this card"
-            }
+            },
+            "frame": 8
         },
         {
             "name": "greed",
             "description": "use python in your project",
             "modifier": {
               "have": "python"
-            }
+            },
+            "frame": 9
         },
         {
             "name": "wrath",
             "description": "use rust in your project",
             "modifier": {
               "have": "rust"
-            }
+            },
+            "frame": 10
         },
         {
             "name": "envy",
             "description": "use typescript in your project",
             "modifier": {
               "have": "typescript"
-            }
+            },
+            "frame": 11
         },
         {
             "name": "sloth",
             "description": "use javascript in your project",
             "modifier": {
               "have": "javascript"
-            }
+            },
+            "frame": 12
         },
         {
             "name": "pride",
             "description": "use ruby in your project",
             "modifier": {
               "have": "ruby"
-            }
+            },
+            "frame": 13
         },
         {
             "name": "dulingo joker",
             "description": "use a language you haven't used before",
             "modifier": {
               "have": "a language you haven't used before"
-            }
+            },
+            "frame": 14
         },
         {
             "name": "bjf",
             "description": "your project must be local or online multi-user",
             "modifier": {
               "have": "local or online multi-user"
-            }
+            },
+            "frame": 15
         },
         {
             "name": "polaroid",
             "description": "your project must be a photo booth",
             "modifier": {
               "have": "camera"
-            }
+            },
+            "frame": 16
         },
         {
             "name": "[joker Joker]",
@@ -123,7 +140,8 @@
             "modifier": {
               "language": "javascript/typescript",
               "blessing": "get a js sticker"
-            }
+            },
+            "frame": 17
         },
         {
             "name": "micro joker",
@@ -132,35 +150,40 @@
               "have": "under 3kb",
               "curse": "fail the challenge and your be sent a floppy disk",
               "blessing": "get a micro-sd card"
-            }
+            },
+            "frame": 18
         },
         {
             "name": "scratch-off joker",
             "description": "your project should involve gambling",
             "modifier": {
               "have": "gambling"
-            }
+            },
+            "frame": 19
         },
         {
             "name": "white rabbit",
             "description": "use time tracking in your project",
             "modifier": {
               "include": "time tracking"
-            }
+            },
+            "frame": 20
         },
         {
             "name": "forgetful joker",
             "description": "remove the curse of the card to the left of this card",
             "modifier": {
               "blessing": "forget any curse to the left of this card"
-            }
+            },
+            "frame": 21
         },
         {
             "name": "uno joker",
             "description": "only have 1 button",
             "modifier": {
               "have": "1 button"
-            }
+            },
+            "frame": 22
         }
     ]
 }
