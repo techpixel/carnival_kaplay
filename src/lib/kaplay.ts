@@ -88,3 +88,28 @@ vec4 frag(vec2 pos, vec2 uva, vec4 color, sampler2D tex) {
 `
 )
 
+// export let c1 = k.rgb(0, 46, 139);
+// export let c2 = k.rgb(0, 21, 255);
+// export let c3 = k.rgb(32, 0, 192);
+export let c = [
+    k.rgb(0, 46, 139),
+    k.rgb(0, 21, 255),
+    k.rgb(32, 0, 192),
+]
+
+export const bg = k.add([
+    k.color(35, 15, 15),
+    k.rect(k.width(), k.height()),
+    k.pos(0, 0),
+    k.area(),
+
+    k.z(-2),
+
+    k.shader("balatro", () => ({
+        iTime: k.time(),
+        iResolution: k.vec2(5, 5),
+        SET_COLOR_1: c[0],
+        SET_COLOR_2: c[1],
+        SET_COLOR_3: c[2],
+    }))
+]);
