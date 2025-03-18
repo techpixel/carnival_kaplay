@@ -2,7 +2,7 @@ import kaplay, { Vec2 } from "kaplay";
 // import "kaplay/global"; // uncomment if you want to use without the k. prefix
 
 export const k = kaplay({
-    width: 1000,
+    width: 1000, 
     height: 600,
 });
 
@@ -103,7 +103,7 @@ export const bg = k.add([
     k.pos(0, 0),
     k.area(),
 
-    k.z(-2),
+    k.z(-3),
 
     k.shader("balatro", () => ({
         iTime: k.time(),

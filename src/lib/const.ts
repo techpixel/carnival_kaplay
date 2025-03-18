@@ -1,4 +1,4 @@
-import { k } from "./lib/kaplay";
+import { k } from "./kaplay";
 
 export const HEIGHT = k.height();
 export const WIDTH = k.width();
@@ -43,8 +43,8 @@ export const PLAY_HAND_BUTTON_X = LEFT + INFOBAR_WIDTH + BUTTON_SPACING + BUTTON
 
 // Hand
 
-export const HAND_WIDTH = 480;
-export const HAND_HEIGHT = 100;
+export const HAND_WIDTH = 480 + BIG_SPACER * 2;
+export const HAND_HEIGHT = CARD_HEIGHT * 1.5;
 
 export const HAND_SPACING = (WIDTH - LEFT - INFOBAR_WIDTH - HAND_WIDTH) / 2;
 

@@ -1,5 +1,5 @@
 import { Vec2 } from "kaplay";
-import { Card, Game, Hand, randomJoker } from "./lib/card";
+import { Button, Card, Game, Hand, randomJoker } from "./lib/card";
 import {
     HEIGHT,
     WIDTH,
@@ -24,10 +24,9 @@ import {
     DECK_X,
     DECK_Y,
     HAND_Y,
-    HAND_X,
     CARD_HEIGHT,
     CARD_WIDTH
-} from "./const";
+} from "./lib/const";
 
 import { 
     k,
@@ -42,65 +41,22 @@ k.scene("balatroui", async () => {
     c[1] = k.rgb(50, 100, 79);
     c[2] = k.rgb(36, 123, 71);
 
-    const discardButton = k.add([
-        k.rect(BUTTON_WIDTH, BUTTON_HEIGHT, {
-            radius: 10,
-        }),
-        k.pos(DISCARD_BUTTON_X, BOTTOM),
-        k.color(186, 56, 56),
-        k.anchor("botright"),
-        k.z(-1),
-        k.area(),
-    ]);
-
-    discardButton.onHover(async () => {
-        if (game.flags.remainingDiscards <= 0) {
-            discardButton.color = k.rgb(108, 108, 108);
-            return;
-        }
-        discardButton.color = k.rgb(255, 68, 68);
-    })
-    discardButton.onHoverEnd(async () => {
-        if (game.flags.remainingDiscards <= 0) {
-            discardButton.color = k.rgb(97, 97, 97);
-            return;
-        }
-        discardButton.color = k.rgb(186, 56, 56);
-    })
-
-    const playHandButton = k.add([
-        k.rect(BUTTON_WIDTH, BUTTON_HEIGHT, {
-            radius: 10,
-        }),
-        k.pos(PLAY_HAND_BUTTON_X, BOTTOM),
-        k.color(56, 138, 186),
-        k.anchor("botleft"),
-        k.z(-1),
-        k.area(),
-    ]);
-    playHandButton.onHover(async () => {
-        playHandButton.color = k.rgb(55, 178, 255);
-    })
-    playHandButton.onHoverEnd(async () => {
-        playHandButton.color = k.rgb(56, 138, 186);
-    })
-
-    const table = k.add([
-        k.pos(
-            HAND_X - BIG_SPACER,
-            BIG_SPACER
-        ),
-
-        k.rect(HAND_WIDTH + BIG_SPACER * 2, 200, {
-            radius: 10,
-        }),
-        k.color(0, 0, 0),
-        k.opacity(0.10),
-        k.area(),
-    ]);
-
     const game = new Game();
     const playerHand = game.hand;    
+
+    const discardButton = new Button(
+        game,
+        'discard',
+        k.rgb(186, 56, 56),
+        k.vec2(DISCARD_BUTTON_X, BOTTOM),
+    );
+
+    const playHandButton = new Button(
+        game,
+        'play hand',
+        k.rgb(56, 138, 186),
+        k.vec2(PLAY_HAND_BUTTON_X + BUTTON_WIDTH, BOTTOM),
+    );
 
     k.onDraw(() => {
         //info bar
@@ -158,45 +114,32 @@ k.scene("balatroui", async () => {
             font: "font",
         });
 
-        // hand
-        k.drawRect({
-            width: HAND_WIDTH,
-            height: HAND_HEIGHT,
-
-            pos: k.vec2(playerHand.pos.x, playerHand.pos.y),
-            anchor: "botleft",
-
-            radius: 10,
-
-            color: k.rgb(0, 0, 0),
-            opacity: 0.10,
-        });
-
-        // discard button
+        // card hand amt
         k.drawText({
-            text: "discard",
+            text: `${game.hand.cards.length}/7`,
             size: 16,
             width: BUTTON_WIDTH - 24,
-            pos: k.vec2(discardButton.pos.x - 12, discardButton.pos.y - 18),
+            pos: k.vec2(WIDTH - LEFT_MARGIN - 30 - INFOBAR_WIDTH, discardButton.pos.y - 24),
             color: k.rgb(255, 255, 255),
-            anchor: "botright",
+            anchor: "right",
             align: "center",
             font: "font",
             scale: 1.5
         });
 
-        // play hand button
+        // table hand amt
         k.drawText({
-            text: "play hand",
+            text: `${game.table.cards.length}/4`,
             size: 16,
             width: BUTTON_WIDTH - 24,
-            pos: k.vec2(playHandButton.pos.x + 12, playHandButton.pos.y - 18),
+            pos: k.vec2(WIDTH - LEFT_MARGIN - 30 - INFOBAR_WIDTH, BIG_SPACER * 5),
             color: k.rgb(255, 255, 255),
-            anchor: "botleft",
+            anchor: "right",
             align: "center",
             font: "font",
-            scale: 1.5,
+            scale: 1.5
         });
+
 
         k.drawSprite({
             sprite: "lines",
@@ -228,22 +171,22 @@ k.scene("balatroui", async () => {
         await playerHand.addCard(card)
     }
 
-    discardButton.onClick(async () => {
-        if (game.flags.remainingDiscards <= 0) {
-            discardButton.color = k.rgb(97, 97, 97);
+    discardButton.obj.onClick(async () => {
+        if (game.flags.remainingDiscards <= 1) {
+            discardButton.disable();
             return;
         }
         game.flags.remainingDiscards--;
 
         const selectedCards = playerHand.cards.filter((card) => card.flags.selected);
 
-        const newCards = await API.discard(selectedCards.map(card => card.flags.parentSlot));
+        const newCards = await API.discard(selectedCards.map(card => card.joker.instance_id));
         console.log("new cards", newCards);
 
         for (const oldCard of selectedCards) {
             console.log("discarding", oldCard.joker);
 
-            playerHand.removeCard(oldCard, k.vec2(DECK_X, DECK_Y));
+            playerHand.destroyCard(oldCard, k.vec2(DECK_X, DECK_Y));
         }
 
         for (const newCard of newCards) {
@@ -261,7 +204,7 @@ k.scene("balatroui", async () => {
     })
 
     let cardsInPlay: Card[] = [];
-    playHandButton.onClick(async () => {
+    playHandButton.obj.onClick(async () => {
         cardsInPlay = playerHand.cards.filter((card) => card.flags.selected);
 
         if (cardsInPlay.length !== 4) return;
@@ -299,35 +242,6 @@ k.scene("balatroui", async () => {
             k.easings.easeInOutSine
         )
 
-        // move buttons + hand out of view
-        k.tween(
-            discardButton.pos.y,
-            800,
-            1.5,
-            (val) => {
-                discardButton.pos.y = val;
-            },
-            k.easings.easeInBack
-        )
-        k.tween(
-            playHandButton.pos.y,
-            800,
-            1.5,
-            (val) => {
-                playHandButton.pos.y = val;
-            },
-            k.easings.easeInBack
-        )
-        k.tween(
-            playerHand.pos.y,
-            800,
-            1.5,
-            (val) => {
-                playerHand.pos.y = val;
-            },
-            k.easings.easeInBack
-        )        
-
         for (const card of playerHand.cards) {
             if (card.flags.selected) continue;
 
@@ -345,9 +259,7 @@ k.scene("balatroui", async () => {
         let i = -1;
         for (const card of cardsInPlay) {
             i++;
-            console.log("playing", card.joker);
-
-            await playerHand.removeCard(card, k.vec2(DECK_X, DECK_Y), false);
+            await playerHand.removeCard(card);
 
             const LMARG = LEFT + INFOBAR_WIDTH + BIG_SPACER * 2;
 

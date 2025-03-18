@@ -1,8 +1,10 @@
-const API_URL = "https://carnival.preview.gus.ink";
+const API_URL = "http://localhost:3000";
+// "https://carnival.preview.gus.ink";
 const AUTH_TOKEN = "mvNDH1nGMhJixVtdDhHJeUa5TAJGCx5B";
 
 export type JokerData = {
     id: string;
+    instance_id: string;
     name: string;
     enabled: boolean;
     description: string;
@@ -58,7 +60,7 @@ async function play(hand: JokerData[]): Promise<string> {
          .catch((error) => console.error(error));
 }
 
-async function discard(indexes: number[]): Promise<JokerData[]> {
+async function discard(indexes: string[]): Promise<JokerData[]> {
     return fetch(`${API_URL}/redraw`, {
         method: "POST",
         headers: {
