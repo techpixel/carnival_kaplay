@@ -1,4 +1,3 @@
-const API_URL = "https://carnival.preview.gus.ink";
 const AUTH_TOKEN = "mvNDH1nGMhJixVtdDhHJeUa5TAJGCx5B";
 
 export type JokerData = {
@@ -12,8 +11,8 @@ export type JokerData = {
 }
 
 async function drawHand(): Promise<JokerData[]> {
-    return fetch(`${API_URL}/draw-hand`, {
-        method: "GET",
+    return fetch("/draw-hand", {
+        method: "POST",
         headers: {
             "Authorization": `Bearer ${AUTH_TOKEN}`
         }
@@ -23,8 +22,8 @@ async function drawHand(): Promise<JokerData[]> {
 }
 
 async function currentHand(): Promise<JokerData[]> {
-    return fetch(`${API_URL}/hand`, {
-        method: "GET",
+    return fetch("/hand", {
+        method: "POST",
         headers: {
             "Authorization": `Bearer ${AUTH_TOKEN}`
         }
@@ -34,7 +33,7 @@ async function currentHand(): Promise<JokerData[]> {
 }
 
 async function draw(hand: JokerData[]): Promise<JokerData> {
-    return fetch(`${API_URL}/draw`, {
+    return fetch("/draw", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -46,7 +45,7 @@ async function draw(hand: JokerData[]): Promise<JokerData> {
 }
 
 async function play(hand: JokerData[]): Promise<string> {
-    return fetch(`${API_URL}/play`, {
+    return fetch("/play", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -59,7 +58,7 @@ async function play(hand: JokerData[]): Promise<string> {
 }
 
 async function discard(indexes: number[]): Promise<JokerData[]> {
-    return fetch(`${API_URL}/redraw`, {
+    return fetch("/redraw", {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${AUTH_TOKEN}`,
