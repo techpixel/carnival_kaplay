@@ -1,3 +1,5 @@
+const API_URL = "http://localhost:3000"
+
 export type JokerData = {
     id: string;
     instance_id: string;
@@ -10,7 +12,7 @@ export type JokerData = {
 }
 
 async function drawHand(): Promise<JokerData[]> {
-    return fetch("/draw-hand", {
+    return fetch(`${API_URL}/draw-hand`, {
         method: "POST",
     })
         .then((response) => response.json())
@@ -18,7 +20,7 @@ async function drawHand(): Promise<JokerData[]> {
 }
 
 async function currentHand(): Promise<JokerData[]> {
-    return fetch("/hand", {
+    return fetch(`${API_URL}/hand`, {
         method: "POST",
     })
         .then((response) => response.json())
@@ -26,7 +28,7 @@ async function currentHand(): Promise<JokerData[]> {
 }
 
 async function draw(hand: JokerData[]): Promise<JokerData> {
-    return fetch("/draw", {
+    return fetch(`${API_URL}/draw`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -38,7 +40,7 @@ async function draw(hand: JokerData[]): Promise<JokerData> {
 }
 
 async function play(hand: JokerData[]): Promise<string> {
-    return fetch("/play", {
+    return fetch(`${API_URL}/play`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -50,8 +52,8 @@ async function play(hand: JokerData[]): Promise<string> {
          .catch((error) => console.error(error));
 }
 
-async function discard(indexes: number[]): Promise<JokerData[]> {
-    return fetch("/redraw", {
+async function discard(indexes: string[]): Promise<JokerData[]> {
+    return fetch(`${API_URL}/redraw`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

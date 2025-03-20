@@ -35,7 +35,7 @@ import {
 } from "./lib/kaplay";
 import { API } from "./lib/api";
 
-k.scene("balatroui", async () => {
+k.scene("game", async () => {
     k.add(bg);
     c[0] = k.rgb(66, 118, 98);
     c[1] = k.rgb(50, 100, 79);
