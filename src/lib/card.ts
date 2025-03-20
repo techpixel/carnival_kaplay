@@ -270,7 +270,7 @@ export class Hand {
     constructor(
         public pos: Vec2,
         public width: number,
-    ) { 
+    ) {
         this.obj.pos.x = this.pos.x;
         this.obj.pos.y = this.pos.y + SPACER;
     }
@@ -395,7 +395,7 @@ export class Hand {
 
         card.obj.destroy();
 
-        await this.moveCards();    
+        await this.moveCards();
     }
 
     getCardPos(slot: number) {
@@ -407,7 +407,7 @@ export class Hand {
         // move all cards
         return k.vec2(
             this.pos.x + spacing * (slot + 1) + CARD_WIDTH / 2 + CARD_WIDTH * slot,
-            this.pos.y - CARD_HEIGHT / 2 + (slot - len / 2 + 0.5) ** 2 ,
+            this.pos.y - CARD_HEIGHT / 2 + (slot - len / 2 + 0.5) ** 2,
         );
     }
 
@@ -430,7 +430,6 @@ export class Hand {
         ]);
     }
 }
-
 export class Table extends Hand {
     constructor(
         pos: Vec2,
@@ -475,7 +474,7 @@ export class Table extends Hand {
 
     getCardRot(slot: number) {
         return 0;
-    } 
+    }
 }
 
 export class Button {
@@ -491,10 +490,10 @@ export class Button {
                         width: BUTTON_WIDTH,
                         height: BUTTON_HEIGHT,
                         anchor: "botright",
-    
+
                         pos: k.vec2(0, 3),
                         radius: 10,
-    
+
                         color: k.rgb(0, 0, 0),
                         opacity: 0.25,
                     });
@@ -504,7 +503,7 @@ export class Button {
                 radius: 10,
             }),
             // k.pos(DISCARD_BUTTON_X, BOTTOM),
-            k.pos(this.pos),            
+            k.pos(this.pos),
             k.color(this.color),
             k.anchor("botright"),
             k.z(-1),
@@ -556,6 +555,104 @@ export class Button {
     }
 }
 
+export class InfoBar {
+    public obj: ReturnType<typeof this.createInfoBar>;
+
+    private createInfoBar() {
+        return k.add([
+            k.rect(INFOBAR_WIDTH, INFOBAR_HEIGHT),
+            k.color(k.rgb(0, 0, 0)),
+            k.pos(LEFT, 0),
+            k.anchor("topleft"),
+            k.z(-1),
+            k.area(),
+            k.opacity(0.25)
+        ]);
+    }
+
+    constructor(public game: Game) {
+        this.obj = this.createInfoBar();
+
+        this.obj.onDraw(() => {
+            // pos irt to info bar
+            k.drawRect({
+                width: INFOBAR_WIDTH - 16,
+                height: 48,
+                anchor: "topleft",
+                pos: k.vec2(8, 48),
+                radius: 12,
+                color: k.rgb(36, 36, 36)
+            });
+
+            k.drawRect({
+                width: INFOBAR_WIDTH - 24,
+                height: 40,
+                anchor: "topleft",
+                pos: k.vec2(12, 52),
+                radius: 10,
+                color: k.rgb(3, 107, 164)
+            });
+
+            k.drawText({
+                width: INFOBAR_WIDTH - 16,
+                size: 24,
+                text: "tutorial",
+                pos: k.vec2(8, 64),
+                anchor: "topleft",
+                align: "center",
+                color: k.rgb(255, 255, 255),
+                font: "font",
+            })
+
+
+            if (this.game.flags.currentlyHovering) {
+                const currentCard = this.game.flags.currentlyHovering;
+                const cardData = this.game.flags.currentlyHovering.joker;
+
+                k.drawSprite({
+                    sprite: "jokers",
+                    frame: currentCard.obj.frame,
+                    pos: k.vec2(this.obj.width / 2, 128),
+                    anchor: "center",
+                })
+
+                k.drawText({
+                    text: cardData.name,
+                    size: 24,
+                    width: INFOBAR_WIDTH - 48,
+                    pos: k.vec2(this.obj.width / 2, 128 + 32),
+                    color: k.rgb(255, 255, 255),
+                    anchor: "center",
+                    align: "center",
+                    font: "font",
+                })
+
+                k.drawText({
+                    text: cardData.description ?? 'uhm... it does something. probably.',
+                    size: 16,
+                    width: INFOBAR_WIDTH - 48,
+                    pos: k.vec2(this.obj.width / 2, 128 + 64),
+                    color: k.rgb(255, 255, 255),
+                    anchor: "center",
+                    align: "center",
+                    font: "font",
+                })
+            }
+
+            k.drawText({
+                text: `remaining discards: ${this.game.flags.remainingDiscards}`,
+                size: 24,
+                width: INFOBAR_WIDTH,
+                pos: k.vec2(this.obj.width / 2, 280),
+                color: k.rgb(255, 68, 68),
+                anchor: "bot",
+                align: "center",
+                font: "font",
+            });
+        });
+    }
+}
+
 export class Game {
     public hand = new Hand(
         k.vec2(HAND_X, HAND_Y),
@@ -566,6 +663,8 @@ export class Game {
         k.vec2(HAND_X, BIG_SPACER),
         HAND_WIDTH,
     );
+
+    public infoBar = new InfoBar(this);
 
     public flags = {
         hovering: null as Card | null,
@@ -639,7 +738,7 @@ export class Game {
         const drop = async (card: Card) => {
             card.flags.selected = false;
 
-            if (this.table.obj.hasPoint(card.obj.pos) && 
+            if (this.table.obj.hasPoint(card.obj.pos) &&
                 ((this.table.cards.length < 4 && !this.table.cards.includes(card)) || this.table.cards.includes(card))
             ) {
                 if (this.hand.cards.includes(card)) {
@@ -655,7 +754,7 @@ export class Game {
                     }
                 }
 
-                await this.table.addCard(card);     
+                await this.table.addCard(card);
             }
 
             if (this.hand.obj.hasPoint(card.obj.pos)) {// && !this.hand.cards.includes(card)) {

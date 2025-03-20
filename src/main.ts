@@ -36,6 +36,10 @@ import {
 import { API } from "./lib/api";
 
 k.scene("game", async () => {
+    const userFlags = {
+        tutorial: true,
+    }
+
     k.add(bg);
     c[0] = k.rgb(66, 118, 98);
     c[1] = k.rgb(50, 100, 79);
@@ -53,67 +57,12 @@ k.scene("game", async () => {
 
     const playHandButton = new Button(
         game,
-        'play hand',
+        'stage hand',
         k.rgb(56, 138, 186),
         k.vec2(PLAY_HAND_BUTTON_X + BUTTON_WIDTH, BOTTOM),
     );
 
     k.onDraw(() => {
-        //info bar
-        k.drawRect({
-            width: INFOBAR_WIDTH,
-            height: INFOBAR_HEIGHT,
-            pos: k.vec2(LEFT, 0),
-
-            color: k.rgb(0, 0, 0),
-            opacity: 0.25,
-        });
-
-        if (game.flags.currentlyHovering) {
-            const currentCard = game.flags.currentlyHovering;
-            const cardData = game.flags.currentlyHovering.joker;
-
-            k.drawSprite({
-                sprite: "jokers",
-                frame: currentCard.obj.frame,
-                pos: k.vec2(LEFT + INFOBAR_WIDTH / 2, TOP + BIG_SPACER),
-                anchor: "center",
-            })
-
-            k.drawText({
-                text: cardData.name,
-                size: 24,
-                width: INFOBAR_WIDTH - 48,
-                pos: k.vec2(LEFT + INFOBAR_WIDTH / 2, TOP + BIG_SPACER + CARD_HEIGHT),
-                color: k.rgb(255, 255, 255),
-                anchor: "center",
-                align: "center",
-                font: "font",
-            })
-
-            k.drawText({
-                text: cardData.description ?? 'uhm... it does something. probably.',
-                size: 16,
-                width: INFOBAR_WIDTH - 48,
-                pos: k.vec2(LEFT + INFOBAR_WIDTH / 2, TOP + BIG_SPACER + CARD_HEIGHT + 32),
-                color: k.rgb(255, 255, 255),
-                anchor: "center",
-                align: "center",
-                font: "font",
-            })
-        }
-
-        k.drawText({
-            text: `remaining discards: ${game.flags.remainingDiscards}`,
-            size: 24,
-            width: INFOBAR_WIDTH,
-            pos: k.vec2(LEFT + INFOBAR_WIDTH, BOTTOM - BIG_SPACER),
-            color: k.rgb(255, 68, 68),
-            anchor: "botright",
-            align: "center",
-            font: "font",
-        });
-
         // card hand amt
         k.drawText({
             text: `${game.hand.cards.length}/7`,
@@ -139,7 +88,6 @@ k.scene("game", async () => {
             font: "font",
             scale: 1.5
         });
-
 
         k.drawSprite({
             sprite: "lines",
