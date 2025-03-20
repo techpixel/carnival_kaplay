@@ -1,5 +1,5 @@
 import { c, k } from "./kaplay";
-import { Vec2, TweenController, MouseButton, Color } from "kaplay";
+import { Vec2, TweenController, MouseButton, Color, CharTransform, CharTransformFunc } from "kaplay";
 import {
     HEIGHT,
     WIDTH,
@@ -558,6 +558,15 @@ export class Button {
 export class InfoBar {
     public obj: ReturnType<typeof this.createInfoBar>;
 
+    private balatroTextAnim(len: number = 8): CharTransformFunc {
+        return (idx: number, ch: string) => {
+            return {
+                angle: Math.sin((k.time() + idx) / 2) * 1 + (idx - (len / 2)),
+                pos: k.vec2(0, Math.sin((k.time() + idx) * 3) * 0.5),
+            } as CharTransform
+        }
+    }
+
     private createInfoBar() {
         return k.add([
             k.rect(INFOBAR_WIDTH, INFOBAR_HEIGHT),
@@ -575,79 +584,118 @@ export class InfoBar {
 
         this.obj.onDraw(() => {
             // pos irt to info bar
+
+            // title
             k.drawRect({
-                width: INFOBAR_WIDTH - 16,
+                width: INFOBAR_WIDTH - 32,
                 height: 48,
                 anchor: "topleft",
-                pos: k.vec2(8, 48),
+                pos: k.vec2(16, 48),
                 radius: 12,
-                color: k.rgb(36, 36, 36)
-            });
-
-            k.drawRect({
-                width: INFOBAR_WIDTH - 24,
-                height: 40,
-                anchor: "topleft",
-                pos: k.vec2(12, 52),
-                radius: 10,
-                color: k.rgb(3, 107, 164)
+                color: k.rgb(3, 107, 164),
+                outline: {
+                    width: 4,
+                    color: k.rgb(0, 0, 0),
+                    opacity: 0.5,
+                }
             });
 
             k.drawText({
-                width: INFOBAR_WIDTH - 16,
+                width: INFOBAR_WIDTH - 32,
                 size: 24,
                 text: "tutorial",
-                pos: k.vec2(8, 64),
+                pos: k.vec2(16, 64),
                 anchor: "topleft",
                 align: "center",
                 color: k.rgb(255, 255, 255),
                 font: "font",
+                letterSpacing: 1.5,
+                transform: this.balatroTextAnim("tutorial".length)
             })
 
+            // card preview
+            k.drawRect({
+                width: INFOBAR_WIDTH - 32,
+                height: 136,
+                anchor: "topleft",
+                pos: k.vec2(16, 96 + 16 + 8),
+                radius: 12,
+                color: k.rgb(45, 45, 45),
+                outline: {
+                    width: 4,
+                    color: k.rgb(0, 0, 0),
+                    opacity: 0.5,
+                }
+            });
+
+            k.drawSprite({
+                sprite: "jokers",
+                frame: 0,
+                color: k.rgb(0, 0, 0),
+                opacity: 0.35,
+                pos: k.vec2(16 + 8, 96 + 32 + 16 + 8),
+                anchor: "topleft",
+            })
 
             if (this.game.flags.currentlyHovering) {
                 const currentCard = this.game.flags.currentlyHovering;
                 const cardData = this.game.flags.currentlyHovering.joker;
 
+                k.drawText({
+                    text: cardData.name,
+                    size: 20,
+                    width: INFOBAR_WIDTH - 32,
+                    pos: k.vec2(16+8+2, 128),
+                    anchor: "topleft",
+                    align: "left",
+                    color: k.rgb(255, 255, 255),
+                    font: "font",
+                    transform: this.balatroTextAnim(cardData.name.length)
+                })
+
                 k.drawSprite({
                     sprite: "jokers",
                     frame: currentCard.obj.frame,
-                    pos: k.vec2(this.obj.width / 2, 128),
-                    anchor: "center",
-                })
-
-                k.drawText({
-                    text: cardData.name,
-                    size: 24,
-                    width: INFOBAR_WIDTH - 48,
-                    pos: k.vec2(this.obj.width / 2, 128 + 32),
-                    color: k.rgb(255, 255, 255),
-                    anchor: "center",
-                    align: "center",
-                    font: "font",
+                    pos: k.vec2(16 + 8, 96 + 32 + 16 + 8),
+                    anchor: "topleft",
                 })
 
                 k.drawText({
                     text: cardData.description ?? 'uhm... it does something. probably.',
                     size: 16,
-                    width: INFOBAR_WIDTH - 48,
-                    pos: k.vec2(this.obj.width / 2, 128 + 64),
+                    width: 120,
+                    pos: k.vec2(16 + 8 + 72, 96 + 32 + 16 + 8 + 8),
                     color: k.rgb(255, 255, 255),
-                    anchor: "center",
+                    anchor: "topleft",
                     align: "center",
                     font: "font",
                 })
+            } else {
+                k.drawText({
+                    text: "card preview",
+                    size: 20,
+                    width: INFOBAR_WIDTH - 32,
+                    pos: k.vec2(16+8+2, 128),
+                    anchor: "topleft",
+                    align: "left",
+                    color: k.rgb(255, 255, 255),
+                    font: "font",
+                    transform: this.balatroTextAnim("card preview".length)
+                })
             }
+
+            // discards
 
             k.drawText({
                 text: `remaining discards: ${this.game.flags.remainingDiscards}`,
                 size: 24,
                 width: INFOBAR_WIDTH,
-                pos: k.vec2(this.obj.width / 2, 280),
+                pos: k.vec2(this.obj.width / 2, BOTTOM - 32),
                 color: k.rgb(255, 68, 68),
                 anchor: "bot",
                 align: "center",
                 font: "font",
+                transform: this.balatroTextAnim(`remaining discards: ${this.game.flags.remainingDiscards}`.length)
             });
         });
     }
