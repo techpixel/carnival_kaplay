@@ -8,10 +8,10 @@
 		"zip": "bun run build && mkdir -p dist && zip -r dist/game.zip dist -x \"**/.DS_Store\""
 	},
 	"dependencies": {
-		"kaplay": "^3001.0.9"
+		"kaplay": "^3001.0.10"
 	},
 	"devDependencies": {
-		"@types/node": "^22.13.9",
-		"vite": "^6.2.0"
+		"@types/node": "^22.13.11",
+		"vite": "^6.2.2"
 	}
 }

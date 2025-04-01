@@ -89,6 +89,13 @@ export class Card {
 
         const focus = async () => {
             await this.fade(k.rgb(200, 200, 200), 1 / 4, k.easings.easeOutExpo);
+
+            this.game.tutorial.flags.cardsHovered++;
+
+            if (this.game.tutorial.flags.cardsHovered >= 10 && this.game.tutorial.flags.step === 2) {
+                this.game.tutorial.flags.cardsHovered = 0;
+                this.game.tutorial.steps[++this.game.tutorial.flags.step]();
+            }
         };
 
         const unfocus = async () => {
@@ -97,6 +104,8 @@ export class Card {
 
         // this is a really bad workaround - i don't want to have to do the math while it's hovering. but it's fine for now
         this.obj.onHoverUpdate(async () => {
+            if (this.game.tutorial.flags.disableCards) return;
+
             if (game.flags.currentlyHovering) {
                 if (game.flags.currentlyHovering === this) {
                     return;
@@ -119,15 +128,6 @@ export class Card {
 
             await unfocus();
         });
-
-        // this.obj.onUpdate(() => {
-        //     // check if the card is idle
-        //     if (!this.flags.animLock && !this.flags.dragging && !this.flags.selected && !this.obj.tags.includes("dragging")) {
-        //         // use sine to make the card bob up and down. use x position to make it unique for each card
-        //         this.flags.anchor.y = this.flags.anchor.y + Math.sin(this.obj.pos.x / 10 + k.time() * 2) / 30;
-        //         this.obj.pos.y = this.flags.anchor.y;
-        //     }
-        // })
     }
 
     async move(x: number, y: number, time = 1, easing = k.easings.easeOutSine): Promise<void> {
@@ -254,6 +254,7 @@ export class Card {
 export class Hand {
     public cards: Card[] = [];
     public nextIndex = 0;
+    public layerOffset = 0;
 
     public obj = k.add([
         k.rect(HAND_WIDTH, HAND_HEIGHT, {
@@ -273,6 +274,17 @@ export class Hand {
     ) {
         this.obj.pos.x = this.pos.x;
         this.obj.pos.y = this.pos.y + SPACER;
+
+        // this.obj.onUpdate(() => {
+        //     for (const card of this.cards) {
+        //         // check if the card is idle
+        //         if (!card.flags.animLock && !card.flags.dragging && !card.flags.selected && !card.obj.tags.includes("dragging")) {
+        //             // use sine to make the card bob up and down. use x position to make it unique for each card
+        //             card.flags.anchor.y = card.flags.anchor.y + Math.sin(card.obj.pos.x / 10 + k.time() * 2) / 30;
+        //             card.obj.pos.y = card.flags.anchor.y;
+        //         }
+        //     }
+        // })
     }
 
     async moveCards() {
@@ -298,7 +310,7 @@ export class Hand {
                 card.rotate(cardRot, 1 / 4, k.easings.easeOutExpo)
             }
 
-            card.obj.z = i / len;
+            card.obj.z = i / len + this.layerOffset;
             card.flags.parentSlot = i;
 
             card.flags.anchor = cardPos;
@@ -430,6 +442,7 @@ export class Hand {
         ]);
     }
 }
+
 export class Table extends Hand {
     constructor(
         pos: Vec2,
@@ -553,16 +566,31 @@ export class Button {
         this.hoverColor = k.rgb(108, 108, 108);
         this.obj.color = this.color;
     }
+    
+    onClick(cb: () => void) {
+        this.obj.onClick(() => {
+            if (this.game.tutorial.flags.disableButtons) return;
+
+            cb();
+        });
+    }
 }
 
+const THIN_PAD = 4;
+const PAD = 8;
+const DOUBLE_PAD = PAD * 2;
 export class InfoBar {
     public obj: ReturnType<typeof this.createInfoBar>;
+
+    public themeColor: Color = k.rgb(3, 107, 164);
+    public accentColor: Color = k.rgb(1, 59, 91);
+    public bgColor: Color = k.rgb(20, 34, 37);
 
     private balatroTextAnim(len: number = 8): CharTransformFunc {
         return (idx: number, ch: string) => {
             return {
-                angle: Math.sin((k.time() + idx) / 2) * 1 + (idx - (len / 2)),
-                pos: k.vec2(0, Math.sin((k.time() + idx) * 3) * 0.5),
+                angle: Math.sin((k.time() + idx) / 2) * 1.5 + (idx - (len / 2)),
+                pos: k.vec2(0, Math.sin((k.time() + idx)) + 1.5),
             } as CharTransform
         }
     }
@@ -579,32 +607,70 @@ export class InfoBar {
         ]);
     }
 
+    private drawBox(opt: {
+        pos: Vec2,
+        width: number,
+        height: number,
+        color?: Color,
+        z?: number
+    }) {
+        //draw shadow first
+        k.drawRect({
+            width: opt.width,
+            height: opt.height,
+            anchor: "topleft",
+            pos: opt.pos.add(k.vec2(0, 3)),
+            // automatically calculate the radius depending on what layer it is (outer layer? inner layer? etc.)
+            // outer r = inner r + padding; inner r = 12
+            radius: 4 + (THIN_PAD) * (opt.z ?? 1),
+            color: k.rgb(0, 0, 0),
+            opacity: 0.25
+        })
+
+        k.drawRect({
+            width: opt.width,
+            height: opt.height,
+            anchor: "topleft",
+            pos: opt.pos,
+            radius: 4 + (THIN_PAD) * (opt.z ?? 1),
+            color: opt.color ?? this.themeColor,
+            // outline: {
+            //     width: 4,
+            //     color: this.accentColor,
+            //     opacity: 0.5,
+            // }
+        });
+    }
+
     constructor(public game: Game) {
         this.obj = this.createInfoBar();
 
         this.obj.onDraw(() => {
             // pos irt to info bar
 
-            // title
-            k.drawRect({
-                width: INFOBAR_WIDTH - 32,
-                height: 48,
-                anchor: "topleft",
-                pos: k.vec2(16, 48),
-                radius: 12,
-                color: k.rgb(3, 107, 164),
-                outline: {
-                    width: 4,
-                    color: k.rgb(0, 0, 0),
-                    opacity: 0.5,
-                }
-            });
+            // grouper 1
+            const g1anchor = k.vec2(DOUBLE_PAD, 48);
 
+            this.drawBox({
+                width: INFOBAR_WIDTH - 32,
+                height: 24+PAD+64+PAD+THIN_PAD,
+                pos: g1anchor,
+                color: this.bgColor,
+                z: 2
+            })
+
+            // title
+            this.drawBox({
+                width: INFOBAR_WIDTH - 32 - PAD,
+                height: 24+PAD,
+                pos: g1anchor.add(THIN_PAD, THIN_PAD),
+                z: 1
+            });
             k.drawText({
                 width: INFOBAR_WIDTH - 32,
                 size: 24,
                 text: "tutorial",
-                pos: k.vec2(16, 64),
+                pos: g1anchor.add(0, PAD),
                 anchor: "topleft",
                 align: "center",
                 color: k.rgb(255, 255, 255),
@@ -613,27 +679,43 @@ export class InfoBar {
                 transform: this.balatroTextAnim("tutorial".length)
             })
 
-            // card preview
-            k.drawRect({
-                width: INFOBAR_WIDTH - 32,
-                height: 136,
+            // goal
+            this.drawBox({
+                width: INFOBAR_WIDTH - 32 - PAD,
+                height: 64,
+                pos: g1anchor.add(THIN_PAD, 24 + DOUBLE_PAD),
+                z: 1,
+                color: this.accentColor
+            })
+            k.drawText({
+                width: INFOBAR_WIDTH - 32 - DOUBLE_PAD,
+                size: 16,
+                text: "complete the tutorial to gain a sticker",
+                pos: g1anchor.add(PAD, 24 + DOUBLE_PAD + PAD),
                 anchor: "topleft",
-                pos: k.vec2(16, 96 + 16 + 8),
-                radius: 12,
-                color: k.rgb(45, 45, 45),
-                outline: {
-                    width: 4,
-                    color: k.rgb(0, 0, 0),
-                    opacity: 0.5,
-                }
-            });
+                align: "center",
+                color: k.rgb(255, 255, 255),
+                font: "font",
+                letterSpacing: 1.5,
+            })
+
+            // card preview
+            const cpanchor = k.vec2(16, 48+24+PAD+64+PAD+THIN_PAD+PAD);
+
+            this.drawBox({
+                width: INFOBAR_WIDTH - 32,
+                height: PAD+20+PAD+96+PAD,
+                color: this.bgColor,
+                pos: cpanchor,
+                z: 2,
+            })
 
             k.drawSprite({
                 sprite: "jokers",
                 frame: 0,
                 color: k.rgb(0, 0, 0),
                 opacity: 0.35,
-                pos: k.vec2(16 + 8, 96 + 32 + 16 + 8),
+                pos: cpanchor.add(k.vec2(PAD, PAD+20+PAD)),
                 anchor: "topleft",
             })
 
@@ -645,7 +727,7 @@ export class InfoBar {
                     text: cardData.name,
                     size: 20,
                     width: INFOBAR_WIDTH - 32,
-                    pos: k.vec2(16+8+2, 128),
+                    pos: cpanchor.add(k.vec2(PAD+THIN_PAD, PAD)),
                     anchor: "topleft",
                     align: "left",
                     color: k.rgb(255, 255, 255),
@@ -656,7 +738,7 @@ export class InfoBar {
                 k.drawSprite({
                     sprite: "jokers",
                     frame: currentCard.obj.frame,
-                    pos: k.vec2(16 + 8, 96 + 32 + 16 + 8),
+                    pos: cpanchor.add(k.vec2(PAD, PAD+20+PAD)),
                     anchor: "topleft",
                 })
 
@@ -664,7 +746,8 @@ export class InfoBar {
                     text: cardData.description ?? 'uhm... it does something. probably.',
                     size: 16,
                     width: 120,
-                    pos: k.vec2(16 + 8 + 72, 96 + 32 + 16 + 8 + 8),
+                    // pos: k.vec2(16 + 8 + 72, 96 + 32 + 16 + 8 + 8),
+                    pos: cpanchor.add(k.vec2(PAD+64+PAD, PAD+20+PAD)),
                     color: k.rgb(255, 255, 255),
                     anchor: "topleft",
                     align: "center",
@@ -675,7 +758,7 @@ export class InfoBar {
                     text: "card preview",
                     size: 20,
                     width: INFOBAR_WIDTH - 32,
-                    pos: k.vec2(16+8+2, 128),
+                    pos: cpanchor.add(k.vec2(PAD+THIN_PAD, PAD)),
                     anchor: "topleft",
                     align: "left",
                     color: k.rgb(255, 255, 255),
@@ -685,23 +768,360 @@ export class InfoBar {
             }
 
             // discards
+            const tutanchor = k.vec2(16, 48+24+PAD+64+PAD+THIN_PAD+PAD+PAD+20+PAD+96+PAD+PAD);
+
+            this.drawBox({
+                width: INFOBAR_WIDTH - 32,
+                height: PAD+32+PAD,
+                color: this.accentColor,
+                pos: tutanchor,
+                z: 2,
+            })
+
+            this.drawBox({
+                width: 32,
+                height: 32,
+                color: this.bgColor,
+                pos: tutanchor.add(INFOBAR_WIDTH - 64 - PAD, PAD)
+            })
 
             k.drawText({
-                text: `remaining discards: ${this.game.flags.remainingDiscards}`,
+                text: 'discards',
+                size: 18,
+                font: 'font',
+                pos: tutanchor.add(PAD, DOUBLE_PAD)
+            })
+
+            k.drawText({
+                text: `${this.game.flags.remainingDiscards}`,
                 size: 24,
-                width: INFOBAR_WIDTH,
-                pos: k.vec2(this.obj.width / 2, BOTTOM - 32),
+                width: 32,
+                pos: tutanchor.add(INFOBAR_WIDTH - 64 - PAD + 1, PAD + THIN_PAD + 1),
                 color: k.rgb(255, 68, 68),
-                anchor: "bot",
+                anchor: "topleft",
                 align: "center",
                 font: "font",
-                transform: this.balatroTextAnim(`remaining discards: ${this.game.flags.remainingDiscards}`.length)
+                transform: this.balatroTextAnim(`${this.game.flags.remainingDiscards}`.length)
             });
         });
     }
 }
 
+export class Tutorial {
+    public overlay: ReturnType<typeof this.createOverlay>;
+    public jimbo: ReturnType<typeof this.createJimbo>;
+
+    public text: ReturnType<typeof this.createText>;
+
+    public nextButton: ReturnType<typeof this.createNextButton>;
+
+    public flags = {
+        disableCards: false,
+        disableButtons: false,
+        step: 0,
+        cardsHovered: 0
+    };
+
+    public steps: Function[] = [];
+
+    private createOverlay() {
+        return k.add([
+            k.rect(k.width(), k.height()),
+            k.color(0, 0, 0),
+            k.opacity(0),
+            k.pos(0, 0),
+            k.z(5),
+            k.anchor("topleft"),
+            k.area(),
+        ])
+    }
+
+    private createJimbo() {
+        // jimbo must be alive
+        return k.add([
+            {
+                draw() {
+                    k.drawSprite({
+                        sprite: "jokers",
+                        frame: 0,
+                        color: k.rgb(255, 255, 255),
+                        opacity: 0.25,
+                        pos: k.vec2(0, 3),
+                        anchor: "center",
+                    })
+                }
+            },
+            k.sprite("jokers", {
+                frame: 0
+            }),
+            k.anchor("center"),
+            k.pos(k.width() / 2, k.height() / 2),
+            k.scale(0),
+            k.z(11),
+            k.rotate(0),
+            k.timer(),
+        ]);
+    }
+
+    private createText() {
+        return k.add([
+            {
+                draw() {
+                    k.drawRect({
+                        width: 128,
+                        height: 16 + this.height,
+                        anchor: "bot",
+                        pos: k.vec2(0, 8),
+                        color: k.rgb(255, 255, 255),
+                        radius: 12,
+                        outline: {
+                            color: k.rgb(195, 202, 210),
+                            // opacity: 0.25,
+                            width: 2.5,
+                        },
+                    })
+                }
+            },
+            k.text("n/a", {
+                size: 16,
+                width: 112,
+                font: "font",
+                align: "center",
+                styles: {
+                    "blue": {
+                        color: k.rgb(25, 162, 230),
+                        override: true,
+                    },
+                    "yellow": {
+                        color: k.rgb(241, 167, 21),
+                        override: true,
+                    },
+                    "red": {
+                        color: k.rgb(216, 75, 65),
+                        override: true,
+                    },
+                    "balatro": (idx: number, ch: string) => {
+                        return {
+                            pos: k.vec2(0, Math.sin((k.time() * 5 + idx)) + 1),
+                        } as CharTransform
+                    }
+                }
+            }),
+            k.color(k.rgb(101, 110, 110)),
+            k.pos(k.width() / 2, k.height() / 2 - 100),
+            k.anchor("bot"),
+            k.z(10),
+            k.scale(0),
+        ])
+    }
+
+    private updateText(text: string) {
+        this.text.text = text;
+        this.text.scale = k.vec2(1);
+    }
+
+    private createNextButton() {
+        const button = k.add([
+            {
+                draw() {
+                    k.drawRect({
+                        width: CARD_WIDTH,
+                        height: BUTTON_HEIGHT,
+                        anchor: "center",
+                        pos: k.vec2(0, -20),
+                        radius: 10,
+                        color: k.rgb(0, 0, 0),
+                        opacity: 0.25,
+                    });
+                }
+            },
+            k.rect(CARD_WIDTH, BUTTON_HEIGHT, {
+                radius: 10,
+            }),
+            k.color(186, 56, 56),
+            k.pos(this.jimbo.pos.add(k.vec2(0, 140))),
+            k.anchor("bot"),
+            k.z(10),
+            k.area(),
+            k.scale(0),
+        ]);
+
+        button.onDraw(() => {
+            k.drawText({
+                text: "next",
+                size: 16,
+                width: BUTTON_WIDTH - 24,
+                pos: k.vec2(0, -18),
+                color: k.rgb(255, 255, 255),
+                anchor: "bot",
+                align: "center",
+                font: "font",
+                scale: 1.5
+            });
+        });
+
+        button.onHover(async () => {
+            button.color = button.color.lighten(20);
+        });
+
+        button.onHoverEnd(async () => {
+            button.color = k.rgb(186, 56, 56);
+        });
+
+        button.onClick(async () => {
+            this.text.scale = k.vec2(0);            
+            this.nextButton.scale = k.vec2(0);
+
+            this.flags.step++;
+            if (this.flags.step < this.steps.length) this.steps[this.flags.step]();
+        })
+
+        return button;
+    }
+
+    constructor(public game: Game) {
+        this.game = game;
+        game.flags.inTutorial = true;
+
+        this.flags.disableButtons = true;
+        this.flags.disableCards = true;
+
+        this.overlay = this.createOverlay();
+        this.jimbo = this.createJimbo();
+        this.text = this.createText();
+
+        this.nextButton = this.createNextButton();
+    }
+
+    async start() {
+        await k.wait(0.25);
+
+        await waitTween(
+            this.jimbo.tween(
+                this.overlay.opacity,
+                0.5,
+                1,
+                (val) => this.overlay.opacity = val,
+                k.easings.easeOutSine,
+            )
+        )
+
+        await waitTween(
+            this.jimbo.tween(
+                k.vec2(0, 0),
+                k.vec2(1.5, 1.5),
+                0.5,
+                (val) => this.jimbo.scale = val,
+                k.easings.easeOutSine,
+            )
+        )
+
+        await this.chatter("Hello there! My name is [balatro][blue]Jimbo[/blue][/balatro]. I'm here to help you learn how to play!");
+
+        this.steps[0] = async () => {
+            await k.wait(0.125);
+            console.log("step 0");
+            await this.chatter("Your goal is to build a project based on the [yellow]Jokers[/yellow] you play.");
+        }
+
+        this.steps[1] = async () => {
+            await k.wait(0.125);
+            console.log("step 1");
+            await this.chatter("You can hover over the jokers to see what they do. Try it out!");            
+        }
+
+        this.steps[2] = async () => {
+            this.overlay.opacity = 0;
+            this.jimbo.scale = k.vec2(0);
+            this.text.scale = k.vec2(0);
+            this.game.tutorial.flags.disableCards = false;
+        }
+
+        this.steps[3] = async () => {
+            this.game.tutorial.flags.disableCards = true;
+            this.overlay.opacity = 0.5;
+            console.log("step 3");
+            await this.chatter("You can [red]discard[/red] jokers you don't want to play for new jokers.");
+        }
+
+        this.steps[4] = async () => {  
+            await k.wait(0.125);
+            console.log("step 4");
+            await this.chatter("When you are ready, you can [blue]play[/blue] jokers to the table. The jokers you play will be used to build your project.");
+        }
+
+        this.steps[5] = async () => {
+            this.overlay.opacity = 0;
+            this.jimbo.scale = k.vec2(0);
+            this.text.scale = k.vec2(0);
+            this.game.tutorial.flags.disableCards = false;
+        }        
+    }
+
+    async chatter(text: string) {
+        this.updateText(text);
+
+        for (let i = 0; i < 5; i++) {
+            await Promise.all([
+                waitTween(
+                    this.jimbo.tween(
+                        this.jimbo.angle,
+                        k.randi(-10, 10),
+                        0.125,
+                        (val) => this.jimbo.angle = val,
+                        k.easings.easeInSine,
+                    )
+                ),
+                waitTween(
+                    this.jimbo.tween(
+                        this.jimbo.scale,
+                        k.vec2(1.75, 1.75),
+                        0.125,
+                        (val) => this.jimbo.scale = val,
+                        k.easings.easeOutSine,
+                    )
+                )
+            ])
+            
+            await Promise.all([
+                waitTween(
+                    this.jimbo.tween(
+                        this.jimbo.angle,
+                        0,
+                        0.125,
+                        (val) => this.jimbo.angle = val,
+                        k.easings.easeOutSine,
+                    )
+                ),
+                waitTween(
+                    this.jimbo.tween(
+                        this.jimbo.scale,
+                        k.vec2(1.5, 1.5),
+                        0.125,
+                        (val) => this.jimbo.scale = val,
+                        k.easings.easeOutSine,
+                    )
+                )
+            ])
+        }
+        await k.wait(0.125);
+        this.nextButton.scale = k.vec2(1);
+    }
+}
+
 export class Game {
+    public flags = {
+        hovering: null as Card | null,
+
+        currentlyHovering: null as Card | null,
+        remainingDiscards: 2,
+        playHand: false,
+
+        mouseHolding: null as Card | null,
+
+        inTutorial: false,
+    };
+
     public hand = new Hand(
         k.vec2(HAND_X, HAND_Y),
         HAND_WIDTH,
@@ -712,17 +1132,9 @@ export class Game {
         HAND_WIDTH,
     );
 
+    public tutorial = new Tutorial(this);
+
     public infoBar = new InfoBar(this);
-
-    public flags = {
-        hovering: null as Card | null,
-
-        currentlyHovering: null as Card | null,
-        remainingDiscards: 2,
-        playHand: false,
-
-        mouseHolding: null as Card | null,
-    };
 
     constructor() {
         // Card movement
@@ -761,6 +1173,7 @@ export class Game {
         let bouncer = false;
         const click = async () => {
             if (bouncer) return;
+            if (this.tutorial.flags.disableCards) return;
             const card = this.flags.currentlyHovering;
             if (!card) return;
 
@@ -784,6 +1197,7 @@ export class Game {
 
         // let cardsInPlay: Card[] = [];
         const drop = async (card: Card) => {
+            if (this.tutorial.flags.disableCards) return;
             card.flags.selected = false;
 
             if (this.table.obj.hasPoint(card.obj.pos) &&
@@ -840,7 +1254,7 @@ export class Game {
                     k.easings.easeOutExpo
                 )
                 card.rotate(card.flags.anchorRot, 1 / 4, k.easings.easeOutExpo)
-                this.flags.mouseHolding.obj.z = this.flags.mouseHolding.flags.parentSlot / this.hand.cards.length;
+                this.flags.mouseHolding.obj.z = this.flags.mouseHolding.flags.parentSlot / this.hand.cards.length + this.hand.layerOffset;
 
                 this.flags.mouseHolding = null;
             } else {

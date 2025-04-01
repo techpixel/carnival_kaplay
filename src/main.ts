@@ -1,5 +1,5 @@
 import { Vec2 } from "kaplay";
-import { Button, Card, Game, Hand, randomJoker } from "./lib/card";
+import { Button, Card, Game, Hand, randomJoker, Tutorial } from "./lib/card";
 import {
     HEIGHT,
     WIDTH,
@@ -36,14 +36,25 @@ import {
 import { API } from "./lib/api";
 
 k.scene("game", async () => {
-    const userFlags = {
-        tutorial: true,
-    }
-
     k.add(bg);
     c[0] = k.rgb(66, 118, 98);
     c[1] = k.rgb(50, 100, 79);
     c[2] = k.rgb(36, 123, 71);
+
+    const loading = k.add([
+        k.pos(k.width() / 2, k.height() / 2),
+        k.rect(1, 1),
+        k.scale(1500),
+        k.color(c[2]),
+        k.z(10),
+        k.anchor("center"),
+        k.rotate(-15),
+        k.timer(),
+    ])
+
+    const userFlags = {
+        tutorial: true,
+    }
 
     const game = new Game();
     const playerHand = game.hand;    
@@ -97,8 +108,22 @@ k.scene("game", async () => {
             tiled: true,
             opacity: 0.15,
         })
-    });
+    });    
 
+    loading.tween(
+        loading.scale,
+        k.vec2(0, 0),
+        1.5,
+        (val) => {
+            loading.scale = val;
+        },
+        k.easings.linear
+    ).onEnd(() => {
+        loading.destroy();
+    })
+    await k.wait(0.75);
+
+    const tutorial = game.tutorial;
     const drawHand = await API.drawHand();
     console.log("draw hand", drawHand);
 
@@ -109,17 +134,24 @@ k.scene("game", async () => {
             k.vec2(DECK_X - CARD_WIDTH / 2, DECK_Y - CARD_HEIGHT / 2)
         );
 
-        (async () => {
-            await card.scale(k.vec2(0, 1.5), 1 / 8, k.easings.easeInSine);
-            card.obj.sprite = "jokers";
-            // card.obj.frame = k.randi(0, 10);
-            await card.scale(k.vec2(1.5, 1.5), 1 / 8, k.easings.easeOutExpo);
-        })()
+        Promise.all([
+            (async () => {
+                await card.scale(k.vec2(0, 1.5), 1 / 8, k.easings.easeInSine);
 
-        await playerHand.addCard(card)
+                card.obj.sprite = "jokers";
+                // card.obj.frame = k.randi(0, 10);
+
+                await card.scale(k.vec2(1.5, 1.5), 1 / 8, k.easings.easeOutExpo);
+            })(),
+            playerHand.addCard(card)
+        ])
+
+        await k.wait(0.1)
     }
 
-    discardButton.obj.onClick(async () => {
+    await tutorial.start();
+
+    discardButton.onClick(async () => {
         if (game.flags.remainingDiscards <= 1) {
             discardButton.disable();
             return;
@@ -152,7 +184,7 @@ k.scene("game", async () => {
     })
 
     let cardsInPlay: Card[] = [];
-    playHandButton.obj.onClick(async () => {
+    playHandButton.onClick(async () => {
         cardsInPlay = playerHand.cards.filter((card) => card.flags.selected);
 
         if (cardsInPlay.length !== 4) return;
