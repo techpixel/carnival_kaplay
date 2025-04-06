@@ -1,4 +1,3 @@
-import { Vec2 } from "kaplay";
 import { Button, Card, Game, Hand, randomJoker, Tutorial } from "./lib/card";
 import {
     HEIGHT,
@@ -52,11 +51,13 @@ k.scene("game", async () => {
         k.timer(),
     ])
 
-    const userFlags = {
-        tutorial: true,
-    }
-
     const game = new Game();
+
+    const userFlags = await API.user();
+    console.log("user flags", userFlags);
+
+    game.flags.remainingDiscards = userFlags.discards;
+
     const playerHand = game.hand;    
 
     const discardButton = new Button(
@@ -92,7 +93,7 @@ k.scene("game", async () => {
             text: `${game.table.cards.length}/4`,
             size: 16,
             width: BUTTON_WIDTH - 24,
-            pos: k.vec2(WIDTH - LEFT_MARGIN - 30 - INFOBAR_WIDTH, BIG_SPACER * 5),
+            pos: k.vec2(WIDTH - LEFT_MARGIN - 30 - INFOBAR_WIDTH, BIG_SPACER * 4 + SPACER / 2),
             color: k.rgb(255, 255, 255),
             anchor: "right",
             align: "center",
@@ -124,7 +125,7 @@ k.scene("game", async () => {
     await k.wait(0.75);
 
     const tutorial = game.tutorial;
-    const drawHand = await API.drawHand();
+    const drawHand = (await API.hand() as any).hand;
     console.log("draw hand", drawHand);
 
     for (const joker of drawHand) {
@@ -149,7 +150,7 @@ k.scene("game", async () => {
         await k.wait(0.1)
     }
 
-    await tutorial.start();
+    if (game.flags.tutorial) await tutorial.start();
 
     discardButton.onClick(async () => {
         if (game.flags.remainingDiscards <= 1) {
@@ -184,174 +185,121 @@ k.scene("game", async () => {
     })
 
     let cardsInPlay: Card[] = [];
+
+    let error: string[] = [
+        "need 4 cards!",
+        "lol",
+        "mayhaps no",
+        "you wish"
+    ]
+
+    let readyToPlay = false;
     playHandButton.onClick(async () => {
-        cardsInPlay = playerHand.cards.filter((card) => card.flags.selected);
+        if (game.table.cards.length !== 4) {
+            playHandButton.text = error[k.randi(0, error.length)];
 
-        if (cardsInPlay.length !== 4) return;
+            return;
+        };
 
-        k.tween(
-            k.rgb(66, 118, 98),
-            k.rgb(188, 2, 2),
-            1.5,
-            (val) => {
-                if (!bg.uniform) return;
-                c[0] = val;
-            },
-            k.easings.easeInOutSine
-        ).onEnd(() => {
-            game.flags.playHand = true;
-        })
-        k.tween(
-            k.rgb(50, 100, 79),
-            k.rgb(72, 25, 25),
-            1.5,
-            (val) => {
-                if (!bg.uniform) return;
-                c[1] = val;
-            },
-            k.easings.easeInOutSine
-        )
-        k.tween(
-            k.rgb(36, 123, 71),
-            k.rgb(96, 2, 2),
-            1.5,
-            (val) => {
-                if (!bg.uniform) return;
-                c[2] = val;
-            },
-            k.easings.easeInOutSine
-        )
-
-        for (const card of playerHand.cards) {
-            if (card.flags.selected) continue;
-
-            k.tween(
-                card.obj.pos.y,
-                800,
-                3,
-                (val) => {
-                    card.obj.pos.y = val;
-                },
-                k.easings.easeInOutBack
-            )
+        if (!readyToPlay) {
+            readyToPlay = true;
+            playHandButton.text = "r u sure?";
+            return;
         }
 
-        let i = -1;
-        for (const card of cardsInPlay) {
-            i++;
-            await playerHand.removeCard(card);
+        playHandButton.text = "okie";
+        playHandButton.disable();
+        discardButton.disable();
+        
+        await k.wait(0.5);
 
-            const LMARG = LEFT + INFOBAR_WIDTH + BIG_SPACER * 2;
+        for (const card of game.hand.cards) {
+            await card.discard();
+        }
 
-            const CALCULATED_SPACER = (k.width() - LMARG - CARD_WIDTH * cardsInPlay.length - BIG_SPACER * 2) / (cardsInPlay.length - 1);
+        await k.wait(0.1);
 
-            card.move(
-                LMARG + (i * (CARD_WIDTH + CALCULATED_SPACER)) + CARD_WIDTH / 2,
-                TOP + SPACER + CARD_HEIGHT,
-                1 / 4,
-                k.easings.easeOutExpo
-            )
+        await game.shop.moveUp();
 
-            card.flags.anchor = k.vec2(LMARG + (i * (CARD_WIDTH + CALCULATED_SPACER)) + CARD_WIDTH / 2, TOP + SPACER + CARD_HEIGHT);
-            card.flags.anchorRot = 0;
-
-            card.rotate(
-                0,
-                1 / 4,
-                k.easings.easeOutExpo
-            )
-
-            k.onMouseMove((pos) => {
-                // swap card anchors as the card is being dragged
-                if (!game.flags.mouseHolding) return;
-
-                const selectedCard = game.flags.mouseHolding;
-                if (!selectedCard) return;
-
-                for (const card of cardsInPlay) {
-                    if (selectedCard.obj.pos.x > card.obj.pos.x) {
-                        if (cardsInPlay.indexOf(selectedCard) < cardsInPlay.indexOf(card)) {
-                            const selectedCardIndex = cardsInPlay.indexOf(selectedCard);
-                            const cardIndex = cardsInPlay.indexOf(card);
-
-                            cardsInPlay[selectedCardIndex] = card;
-                            cardsInPlay[cardIndex] = selectedCard;
-
-                            //recalculate anchors
-                            let i = -1;
-
-                            for (const card of cardsInPlay) {
-                                i++;
-
-                                const LMARG = LEFT + INFOBAR_WIDTH + BIG_SPACER * 2;
-
-                                const CALCULATED_SPACER = (k.width() - LMARG - CARD_WIDTH * cardsInPlay.length - BIG_SPACER * 2) / (cardsInPlay.length - 1);
-
-                                card.flags.anchor = k.vec2(LMARG + (i * (CARD_WIDTH + CALCULATED_SPACER)) + CARD_WIDTH / 2, TOP + SPACER + CARD_HEIGHT);
-                                card.flags.anchorRot = 0;
-
-                                if (card === selectedCard) continue;
-
-                                card.move(
-                                    LMARG + (i * (CARD_WIDTH + CALCULATED_SPACER)) + CARD_WIDTH / 2,
-                                    TOP + SPACER + CARD_HEIGHT,
-                                    1 / 4,
-                                    k.easings.easeOutExpo
-                                )
-
-                                card.rotate(
-                                    0,
-                                    1 / 4,
-                                    k.easings.easeOutExpo
-                                )
-                            }
-
-                            break;
-                        }
-                    }
-
-                    if (selectedCard.obj.pos.x < card.obj.pos.x) {
-                        if (cardsInPlay.indexOf(selectedCard) > cardsInPlay.indexOf(card)) {
-                            const selectedCardIndex = cardsInPlay.indexOf(selectedCard);
-                            const cardIndex = cardsInPlay.indexOf(card);
-
-                            cardsInPlay[selectedCardIndex] = card;
-                            cardsInPlay[cardIndex] = selectedCard;
-
-                            //recalculate anchors
-                            let i = -1;
-
-                            for (const card of cardsInPlay) {
-                                i++;
-
-                                const LMARG = LEFT + INFOBAR_WIDTH + BIG_SPACER * 2;
-
-                                const CALCULATED_SPACER = (k.width() - LMARG - CARD_WIDTH * cardsInPlay.length - BIG_SPACER * 2) / (cardsInPlay.length - 1);
-
-                                card.flags.anchor = k.vec2(LMARG + (i * (CARD_WIDTH + CALCULATED_SPACER)) + CARD_WIDTH / 2, TOP + SPACER + CARD_HEIGHT);
-                                card.flags.anchorRot = 0;
-
-                                if (card === selectedCard) continue;
-
-                                card.move(
-                                    LMARG + (i * (CARD_WIDTH + CALCULATED_SPACER)) + CARD_WIDTH / 2,
-                                    TOP + SPACER + CARD_HEIGHT,
-                                    1 / 4,
-                                    k.easings.easeOutExpo
-                                )
-
-                                card.rotate(
-                                    0,
-                                    1 / 4,
-                                    k.easings.easeOutExpo
-                                )
-                            }
-
-                            break;
-                        }
+        let i = 0;
+        game.shop.art.push(() => {
+            k.drawText({
+                text: "your prompt is:",
+                size: 24,
+                pos: k.vec2(20, -400 + 20),
+                color: k.rgb(255, 255, 255),
+                font: "font",
+                transform: (idx: number, ch: string) => {              
+                    // scale every 4th character
+                    const y = (Math.sin(idx / 1.3 + k.time()/2) ** 20) * -2;
+                    
+                    return {
+                        pos: k.vec2(0, y)
                     }
                 }
-            })
+            });
+        })
+
+        await k.wait(1);
+
+        game.shop.art.push(() => {
+            k.drawText({
+                text: "wait for it...",
+                size: 24,
+                pos: k.vec2(HAND_WIDTH/2, -400 + 100),
+                color: k.rgb(255, 255, 255),
+                font: "font",
+                // transform: (idx: number, ch: string) => {              
+                //     return {
+                //         scale: k.time(),                        
+                //     }
+                // }
+            });
+        });
+
+        await k.wait(1);
+        game.shop.art.pop();
+
+
+        function funny(gp: ReturnType<typeof k.vec2>) {
+
+        const funny_object = k.make([
+            k.text("yoooooooooo"),
+            k.pos(gp),
+            k.color(k.rgb(255, 255, 255)),
+            k.anchor("center"),
+            k.scale(1),
+            k.z(10),
+            k.timer(),
+            k.rotate(-15),
+        ]);
+        k.add(funny_object);
+
+        funny_object.onUpdate(() => {
+            funny_object.angle += 1;
+
+            // rainbow
+            funny_object.color = k.rgb(
+                Math.sin(k.time() * 2 + 0) * 127 + 128,
+                Math.sin(k.time() * 2 + 2) * 127 + 128,
+                Math.sin(k.time() * 2 + 4) * 127 + 128
+            );
+
+            funny_object.scale = k.vec2(Math.sin(k.time() * 2) + 2, Math.sin(k.time() * 2) + 2);
+            funny_object.pos = funny_object.pos.add(k.randi(-1, 1), k.randi(-1, 1));
+        })
+
+        return funny_object;
         }
+
+        const x = funny(k.vec2(0, 0));
+
+        x.onDraw(() => {
+            if (k.randi(0, 50) < 1) {
+                funny(k.vec2(k.randi(0, WIDTH), k.randi(0, HEIGHT)));
+
+            }
+        });
+        
     })
 });

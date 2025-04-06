@@ -11,15 +11,19 @@ export type JokerData = {
     frameId: number;
 }
 
-async function drawHand(): Promise<JokerData[]> {
-    return fetch(`${API_URL}/draw-hand`, {
-        method: "POST",
+type UserPayload = {
+    discards: number;
+    completed_tutorial: boolean;
+}
+async function user(): Promise<UserPayload> {
+    return fetch(`${API_URL}/user`, {
+        method: "GET",
     })
         .then((response) => response.json())
         .catch((error) => console.error(error));
 }
 
-async function currentHand(): Promise<JokerData[]> {
+async function hand(): Promise<JokerData[]> {
     return fetch(`${API_URL}/hand`, {
         method: "POST",
     })
@@ -65,9 +69,9 @@ async function discard(indexes: string[]): Promise<JokerData[]> {
 }
 
 export const API = {
-    drawHand,
-    currentHand,
+    hand,
     draw,
     play,
     discard,
+    user
 }

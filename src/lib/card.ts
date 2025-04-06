@@ -31,7 +31,7 @@ import {
 } from "./const";
 
 import cardData from '../cards.json';
-import { JokerData } from "./api";
+import { API, JokerData } from "./api";
 
 export function randomJoker() {
     const card = cardData.cards[Math.floor(Math.random() * cardData.cards.length)];
@@ -202,6 +202,21 @@ export class Card {
                 easing,
             )
         );
+    }
+
+    async discard() {
+        Promise.all([
+            (async () => {
+                await this.scale(k.vec2(0, 1.5), 1 / 8, k.easings.easeInSine);
+
+                this.obj.sprite = "backs";
+
+                await this.scale(k.vec2(1.5, 1.5), 1 / 8, k.easings.easeOutExpo);
+            })(),
+            this.move(WIDTH + 100, HEIGHT + 100, 1 / 4, k.easings.easeOutExpo),
+        ])
+
+        await k.wait(0.1)
     }
 
     //event wrappers
@@ -454,10 +469,9 @@ export class Table extends Hand {
 
         this.obj = k.add([
             k.pos(
-                HAND_X,
-                BIG_SPACER
+                pos.sub(k.vec2(0, SPACER / 2))
             ),
-            k.rect(HAND_WIDTH, 200, {
+            k.rect(HAND_WIDTH, HAND_HEIGHT + SPACER, {
                 radius: 10,
             }),
             k.color(0, 0, 0),
@@ -481,7 +495,7 @@ export class Table extends Hand {
         // move all cards
         return k.vec2(
             this.pos.x + LSPACE + CARD_SPACER * (slot + 1) + CARD_WIDTH * slot - CARD_WIDTH / 2,
-            this.pos.y + CARD_HEIGHT,
+            this.pos.y + CARD_HEIGHT * 0.75,
         );
     }
 
@@ -521,6 +535,7 @@ export class Button {
             k.anchor("botright"),
             k.z(-1),
             k.area(),
+            k.scale(1),
         ]);
     }
 
@@ -542,8 +557,8 @@ export class Button {
             k.drawText({
                 text: this.text,
                 size: 16,
-                width: BUTTON_WIDTH - 24,
-                pos: k.vec2(-12, -18),
+                width: BUTTON_WIDTH - 12,
+                pos: k.vec2(-6, -18),
                 color: k.rgb(255, 255, 255),
                 anchor: "botright",
                 align: "center",
@@ -565,6 +580,14 @@ export class Button {
         this.color = k.rgb(97, 97, 97);
         this.hoverColor = k.rgb(108, 108, 108);
         this.obj.color = this.color;
+    }
+
+    hide() {
+        this.obj.scale = k.vec2(0);
+    }
+
+    show() {
+        this.obj.scale = k.vec2(1);
     }
     
     onClick(cb: () => void) {
@@ -981,10 +1004,6 @@ export class Tutorial {
 
     constructor(public game: Game) {
         this.game = game;
-        game.flags.inTutorial = true;
-
-        this.flags.disableButtons = true;
-        this.flags.disableCards = true;
 
         this.overlay = this.createOverlay();
         this.jimbo = this.createJimbo();
@@ -994,6 +1013,11 @@ export class Tutorial {
     }
 
     async start() {
+        this.game.flags.inTutorial = true;
+
+        this.flags.disableButtons = true;
+        this.flags.disableCards = true;
+
         await k.wait(0.25);
 
         await waitTween(
@@ -1109,16 +1133,58 @@ export class Tutorial {
     }
 }
 
+export class Shop {
+    public obj = k.add([
+        k.rect(HAND_WIDTH, 400, {
+            radius: 8,
+        }),
+        k.color(k.rgb(40, 49, 51)),
+        k.outline(5, k.rgb(31, 41, 41), 0.5),
+        k.z(2),
+        k.anchor("botleft"),
+        k.pos(HAND_X, HEIGHT + 100 + 400)
+    ])
+
+    public art: Function[] = [];
+
+    constructor() {
+        const initTime = k.time();
+        
+        this.obj.onDraw(() => {
+            console.log("drawing shop");
+            
+            for (const art of this.art) {
+                art();
+            }
+        })
+    }
+
+    async moveUp() {
+        return waitTween(
+            k.tween(
+                this.obj.pos,
+                k.vec2(HAND_X, HEIGHT + 20 + 400 - 320),
+                0.35,
+                (val) => { 
+                    this.obj.pos = val
+                },
+                k.easings.easeOutBack,
+            )
+        )
+    }
+}
+
 export class Game {
     public flags = {
         hovering: null as Card | null,
 
         currentlyHovering: null as Card | null,
-        remainingDiscards: 2,
+        remainingDiscards: 0,
         playHand: false,
 
         mouseHolding: null as Card | null,
 
+        tutorial: false,
         inTutorial: false,
     };
 
@@ -1131,6 +1197,8 @@ export class Game {
         k.vec2(HAND_X, BIG_SPACER),
         HAND_WIDTH,
     );
+
+    public shop = new Shop();
 
     public tutorial = new Tutorial(this);
 
