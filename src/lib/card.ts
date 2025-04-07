@@ -27,7 +27,9 @@ import {
     HAND_X,
     HAND_Y,
     CARD_HEIGHT,
-    CARD_WIDTH
+    CARD_WIDTH,
+    BG_COLOR,
+    ACCENT_COLOR
 } from "./const";
 
 import cardData from '../cards.json';
@@ -606,8 +608,6 @@ export class InfoBar {
     public obj: ReturnType<typeof this.createInfoBar>;
 
     public themeColor: Color = k.rgb(3, 107, 164);
-    public accentColor: Color = k.rgb(1, 59, 91);
-    public bgColor: Color = k.rgb(20, 34, 37);
 
     private balatroTextAnim(len: number = 8): CharTransformFunc {
         return (idx: number, ch: string) => {
@@ -678,7 +678,7 @@ export class InfoBar {
                 width: INFOBAR_WIDTH - 32,
                 height: 24+PAD+64+PAD+THIN_PAD,
                 pos: g1anchor,
-                color: this.bgColor,
+                color: BG_COLOR,
                 z: 2
             })
 
@@ -708,7 +708,7 @@ export class InfoBar {
                 height: 64,
                 pos: g1anchor.add(THIN_PAD, 24 + DOUBLE_PAD),
                 z: 1,
-                color: this.accentColor
+                color: ACCENT_COLOR
             })
             k.drawText({
                 width: INFOBAR_WIDTH - 32 - DOUBLE_PAD,
@@ -728,7 +728,7 @@ export class InfoBar {
             this.drawBox({
                 width: INFOBAR_WIDTH - 32,
                 height: PAD+20+PAD+96+PAD,
-                color: this.bgColor,
+                color: BG_COLOR,
                 pos: cpanchor,
                 z: 2,
             })
@@ -796,7 +796,7 @@ export class InfoBar {
             this.drawBox({
                 width: INFOBAR_WIDTH - 32,
                 height: PAD+32+PAD,
-                color: this.accentColor,
+                color: ACCENT_COLOR,
                 pos: tutanchor,
                 z: 2,
             })
@@ -804,7 +804,7 @@ export class InfoBar {
             this.drawBox({
                 width: 32,
                 height: 32,
-                color: this.bgColor,
+                color: BG_COLOR,
                 pos: tutanchor.add(INFOBAR_WIDTH - 64 - PAD, PAD)
             })
 
@@ -1138,8 +1138,8 @@ export class Shop {
         k.rect(HAND_WIDTH, 400, {
             radius: 8,
         }),
-        k.color(k.rgb(40, 49, 51)),
-        k.outline(5, k.rgb(31, 41, 41), 0.5),
+        k.color(BG_COLOR),
+        k.outline(5, ACCENT_COLOR, 0.5),
         k.z(2),
         k.anchor("botleft"),
         k.pos(HAND_X, HEIGHT + 100 + 400)
@@ -1151,8 +1151,15 @@ export class Shop {
         const initTime = k.time();
         
         this.obj.onDraw(() => {
-            console.log("drawing shop");
-            
+            k.drawRect({
+                width: HAND_WIDTH - 8,
+                height: 100,
+                anchor: "topleft",
+                pos: k.vec2(4, 4 - 400),
+                radius: 4,
+                color: ACCENT_COLOR
+            })
+
             for (const art of this.art) {
                 art();
             }

@@ -221,85 +221,47 @@ k.scene("game", async () => {
 
         await game.shop.moveUp();
 
-        let i = 0;
+        const data = await API.play(game.table.cards.map(card => card.joker.instance_id));
+
+        await k.wait(0.3);
+
         game.shop.art.push(() => {
             k.drawText({
                 text: "your prompt is:",
-                size: 24,
+                size: 20,
                 pos: k.vec2(20, -400 + 20),
                 color: k.rgb(255, 255, 255),
                 font: "font",
-                transform: (idx: number, ch: string) => {              
-                    // scale every 4th character
-                    const y = (Math.sin(idx / 1.3 + k.time()/2) ** 20) * -2;
+                // transform: (idx: number, ch: string) => {              
+                //     // scale every 4th character
+                //     const y = (Math.sin(idx / 1.3 + k.time()/2) ** 20) * -2;
                     
-                    return {
-                        pos: k.vec2(0, y)
-                    }
-                }
+                //     return {
+                //         pos: k.vec2(0, y)
+                //     }
+                // },
             });
         })
 
-        await k.wait(1);
+        await k.wait(0.3);
+
+        let text = "";
 
         game.shop.art.push(() => {
             k.drawText({
-                text: "wait for it...",
-                size: 24,
-                pos: k.vec2(HAND_WIDTH/2, -400 + 100),
+                text: data,
+                size: 20,
+                pos: k.vec2(20, -400 + 44),
                 color: k.rgb(255, 255, 255),
                 font: "font",
-                // transform: (idx: number, ch: string) => {              
-                //     return {
-                //         scale: k.time(),                        
-                //     }
-                // }
+                width: HAND_WIDTH - 40,
             });
         });
 
-        await k.wait(1);
-        game.shop.art.pop();
+        for (const char of data) {
+            text += char;
 
-
-        function funny(gp: ReturnType<typeof k.vec2>) {
-
-        const funny_object = k.make([
-            k.text("yoooooooooo"),
-            k.pos(gp),
-            k.color(k.rgb(255, 255, 255)),
-            k.anchor("center"),
-            k.scale(1),
-            k.z(10),
-            k.timer(),
-            k.rotate(-15),
-        ]);
-        k.add(funny_object);
-
-        funny_object.onUpdate(() => {
-            funny_object.angle += 1;
-
-            // rainbow
-            funny_object.color = k.rgb(
-                Math.sin(k.time() * 2 + 0) * 127 + 128,
-                Math.sin(k.time() * 2 + 2) * 127 + 128,
-                Math.sin(k.time() * 2 + 4) * 127 + 128
-            );
-
-            funny_object.scale = k.vec2(Math.sin(k.time() * 2) + 2, Math.sin(k.time() * 2) + 2);
-            funny_object.pos = funny_object.pos.add(k.randi(-1, 1), k.randi(-1, 1));
-        })
-
-        return funny_object;
+            await k.wait(0.05);
         }
-
-        const x = funny(k.vec2(0, 0));
-
-        x.onDraw(() => {
-            if (k.randi(0, 50) < 1) {
-                funny(k.vec2(k.randi(0, WIDTH), k.randi(0, HEIGHT)));
-
-            }
-        });
-        
     })
 });

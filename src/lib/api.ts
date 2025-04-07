@@ -43,7 +43,7 @@ async function draw(hand: JokerData[]): Promise<JokerData> {
         .catch((error) => console.error(error));
 }
 
-async function play(hand: JokerData[]): Promise<string> {
+async function play(hand: string[]): Promise<string> {
     return fetch(`${API_URL}/play`, {
         method: "POST",
         headers: {

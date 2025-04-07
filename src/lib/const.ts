@@ -55,3 +55,6 @@ export const HAND_Y = BOTTOM - BUTTON_HEIGHT - BIG_SPACER;
 
 export const DECK_X = RIGHT + CARD_WIDTH + SPACER;
 export const DECK_Y = BOTTOM + CARD_HEIGHT + SPACER;
+
+export const ACCENT_COLOR = k.rgb(1, 59, 91);
+export const BG_COLOR = k.rgb(20, 34, 37);
