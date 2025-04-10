@@ -33,6 +33,7 @@ import {
     bg,
 } from "./lib/kaplay";
 import { API } from "./lib/api";
+import { text } from "stream/consumers";
 
 k.scene("game", async () => {
     k.add(bg);
@@ -195,11 +196,11 @@ k.scene("game", async () => {
 
     let readyToPlay = false;
     playHandButton.onClick(async () => {
-        if (game.table.cards.length !== 4) {
-            playHandButton.text = error[k.randi(0, error.length)];
+        // if (game.table.cards.length !== 4) {
+        //     playHandButton.text = error[k.randi(0, error.length)];
 
-            return;
-        };
+        //     return;
+        // };
 
         if (!readyToPlay) {
             readyToPlay = true;
@@ -217,13 +218,11 @@ k.scene("game", async () => {
             await card.discard();
         }
 
-        await k.wait(0.1);
+        await k.wait(0.3);
 
         await game.shop.moveUp();
 
         const data = await API.play(game.table.cards.map(card => card.joker.instance_id));
-
-        await k.wait(0.3);
 
         game.shop.art.push(() => {
             k.drawText({
@@ -247,11 +246,12 @@ k.scene("game", async () => {
 
         let text = "";
 
+        let initTime = k.time();
         game.shop.art.push(() => {
             k.drawText({
-                text: data,
+                text: text,
                 size: 20,
-                pos: k.vec2(20, -400 + 44),
+                pos: k.vec2(20, -400 + 48),
                 color: k.rgb(255, 255, 255),
                 font: "font",
                 width: HAND_WIDTH - 40,
@@ -261,7 +261,7 @@ k.scene("game", async () => {
         for (const char of data) {
             text += char;
 
-            await k.wait(0.05);
+            await k.wait(0.005);
         }
     })
 });

@@ -1,3 +1,7 @@
+import { config } from "dotenv";
+config({
+    path: '../.env'
+});
 import { resolve } from "path";
 import { defineConfig } from "vite";
 
@@ -7,7 +11,8 @@ const kaplayCongrats = () => {
         buildEnd() {
             const line =
                 "---------------------------------------------------------";
-            const msg = `🦖 Awesome pal! Send your game to us:\n\n💎 Discord: https://discord.com/invite/aQ6RuQm3TF \n💖 Donate to KAPLAY: https://opencollective.com/kaplay\n\ (you can disable this msg on vite.config)`;
+            const PORT = process.env.PORT || 3000;
+            const msg = `Open here: http://localhost:${PORT}/auth?auth_key=${process.env.PERSONAL_AUTH_KEY}`;
 
             process.stdout.write(`\n${line}\n${msg}\n${line}\n`);
         },

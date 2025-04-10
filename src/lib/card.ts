@@ -727,7 +727,7 @@ export class InfoBar {
 
             this.drawBox({
                 width: INFOBAR_WIDTH - 32,
-                height: PAD+20+PAD+96+PAD,
+                height: PAD+20+PAD+96+THIN_PAD+24+PAD,
                 color: BG_COLOR,
                 pos: cpanchor,
                 z: 2,
@@ -742,9 +742,33 @@ export class InfoBar {
                 anchor: "topleft",
             })
 
-            if (this.game.flags.currentlyHovering) {
-                const currentCard = this.game.flags.currentlyHovering;
-                const cardData = this.game.flags.currentlyHovering.joker;
+            this.drawBox({
+                width: CARD_WIDTH,
+                height: 24,
+                pos: cpanchor.add(PAD, PAD+20+PAD+96+THIN_PAD),
+                z: 1
+            });
+
+            this.drawBox({
+                width: 56,
+                height: 24,
+                pos: cpanchor.add(PAD+CARD_WIDTH+THIN_PAD, PAD+20+PAD+96+THIN_PAD),
+                z: 1,
+                color: k.rgb(3, 146, 255),
+            });            
+
+            this.drawBox({
+                width: 56,
+                height: 24,
+                pos: cpanchor.add(INFOBAR_WIDTH-32-PAD-56, PAD+20+PAD+96+THIN_PAD),
+                z: 1,
+                color: k.rgb(255, 68, 68),
+            });                        
+
+            if (this.game.flags.currentlyHovering || this.game.flags.lastSelected) {
+                const currentCard = this.game.flags.currentlyHovering ?? this.game.flags.lastSelected;
+                if (!currentCard) return;
+                const cardData = currentCard.joker;
 
                 k.drawText({
                     text: cardData.name,
@@ -790,14 +814,73 @@ export class InfoBar {
                 })
             }
 
+            // mult
+            const multanchor = cpanchor.add(0, PAD+96+PAD+THIN_PAD+24+PAD*4.5);
+            this.drawBox({
+                width: INFOBAR_WIDTH - 32,
+                height: PAD+72+PAD,
+                color: BG_COLOR,
+                pos: multanchor,
+                z: 2,
+            })
+
+            k.drawText({
+                text: '1,000',
+                size: 24,
+                font: 'font',
+                anchor: "top",
+                pos: multanchor.add((INFOBAR_WIDTH - 32) / 2, PAD),
+                transform: this.balatroTextAnim(4)                
+            })
+
+            this.drawBox({
+                width: 80,
+                height: 40,
+                color: k.rgb(3, 146, 255),
+                pos: multanchor.add(PAD, DOUBLE_PAD*2.5),
+            })
+
+            k.drawText({
+                text: 'x',
+                size: 24,
+                font: 'font',
+                anchor: "top",
+                pos: multanchor.add((INFOBAR_WIDTH - 32) / 2, DOUBLE_PAD*3),
+            })
+
+            this.drawBox({
+                width: 80,
+                height: 40,
+                color: k.rgb(255, 68, 68),
+                pos: multanchor.add(INFOBAR_WIDTH - 32 - 80 - PAD, DOUBLE_PAD*2.5),
+            })
+
+            k.drawText({
+                text: '0',
+                size: 24,
+                font: 'font',
+                anchor: "left",
+                pos: multanchor.add(PAD*2, DOUBLE_PAD*2.5+PAD+13),
+                transform: this.balatroTextAnim(1)
+            })
+
+            k.drawText({
+                text: '1',
+                size: 24,
+                font: 'font',
+                anchor: "left",
+                pos: multanchor.add(INFOBAR_WIDTH - 32 - 80, DOUBLE_PAD*2.5+PAD+12),
+                transform: this.balatroTextAnim(1)
+            })            
+
             // discards
-            const tutanchor = k.vec2(16, 48+24+PAD+64+PAD+THIN_PAD+PAD+PAD+20+PAD+96+PAD+PAD);
+            const disanchor = multanchor.add(0, PAD+72+PAD+PAD);
 
             this.drawBox({
                 width: INFOBAR_WIDTH - 32,
                 height: PAD+32+PAD,
                 color: ACCENT_COLOR,
-                pos: tutanchor,
+                pos: disanchor,
                 z: 2,
             })
 
@@ -805,21 +888,21 @@ export class InfoBar {
                 width: 32,
                 height: 32,
                 color: BG_COLOR,
-                pos: tutanchor.add(INFOBAR_WIDTH - 64 - PAD, PAD)
+                pos: disanchor.add(INFOBAR_WIDTH - 64 - PAD, PAD)
             })
 
             k.drawText({
                 text: 'discards',
                 size: 18,
                 font: 'font',
-                pos: tutanchor.add(PAD, DOUBLE_PAD)
+                pos: disanchor.add(PAD, DOUBLE_PAD)
             })
 
             k.drawText({
                 text: `${this.game.flags.remainingDiscards}`,
                 size: 24,
                 width: 32,
-                pos: tutanchor.add(INFOBAR_WIDTH - 64 - PAD + 1, PAD + THIN_PAD + 1),
+                pos: disanchor.add(INFOBAR_WIDTH - 64 - PAD + 1, PAD + THIN_PAD + 1),
                 color: k.rgb(255, 68, 68),
                 anchor: "topleft",
                 align: "center",
@@ -1153,7 +1236,7 @@ export class Shop {
         this.obj.onDraw(() => {
             k.drawRect({
                 width: HAND_WIDTH - 8,
-                height: 100,
+                height: 200,
                 anchor: "topleft",
                 pos: k.vec2(4, 4 - 400),
                 radius: 4,
@@ -1171,11 +1254,11 @@ export class Shop {
             k.tween(
                 this.obj.pos,
                 k.vec2(HAND_X, HEIGHT + 20 + 400 - 320),
-                0.35,
+                0.5,
                 (val) => { 
                     this.obj.pos = val
                 },
-                k.easings.easeOutBack,
+                k.easings.easeOutQuint,
             )
         )
     }
@@ -1193,6 +1276,8 @@ export class Game {
 
         tutorial: false,
         inTutorial: false,
+
+        lastSelected: null as Card | null,
     };
 
     public hand = new Hand(
@@ -1259,10 +1344,12 @@ export class Game {
 
             if (card.flags.selected) {
                 card.flags.selected = false;
+                this.flags.lastSelected = null;
                 await card.move(cardPos.x, cardPos.y, 0.5, k.easings.easeOutBack);
                 card.flags.anchor.y = cardPos.y;
             } else {
                 card.flags.selected = true;
+                this.flags.lastSelected = card;
                 await card.move(cardPos.x, cardPos.y - 50, 0.5, k.easings.easeOutBack);
                 card.flags.anchor.y = cardPos.y - 50;
             }
