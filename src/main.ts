@@ -24,7 +24,7 @@ import {
     DECK_Y,
     HAND_Y,
     CARD_HEIGHT,
-    CARD_WIDTH
+    CARD_WIDTH,
 } from "./lib/const";
 
 import { 
@@ -263,5 +263,25 @@ k.scene("game", async () => {
 
             await k.wait(0.005);
         }
+
+        const readyToShipButton = new Button(
+            game,
+            'ready to ship',            
+            k.rgb(38, 112, 215),
+            k.vec2(LEFT_MARGIN + INFOBAR_WIDTH + (WIDTH - LEFT_MARGIN - INFOBAR_WIDTH)/2 + BUTTON_WIDTH/2, BOTTOM - 8),
+        );
+
+        readyToShipButton.obj.z = 20;
+
+        const pulseOn = k.rgb(38, 112, 215);
+        const pulseOff = k.rgb(63, 171, 207);
+        readyToShipButton.obj.onUpdate(() => {
+            // loop between the two colors
+            readyToShipButton.obj.color = k.lerp(
+                pulseOff,
+                pulseOn,
+                Math.abs(Math.sin(k.time() * 2))
+            );
+        });
     })
 });
