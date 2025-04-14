@@ -75,7 +75,7 @@ k.scene("game", async () => {
         k.vec2(PLAY_HAND_BUTTON_X + BUTTON_WIDTH, BOTTOM),
     );
 
-    k.onDraw(() => {
+    k.add([k.z(-1)]).onDraw(() => {
         // card hand amt
         k.drawText({
             text: `${game.hand.cards.length}/7`,
@@ -114,14 +114,14 @@ k.scene("game", async () => {
 
     loading.tween(
         loading.scale,
-        k.vec2(0, 0),
+        k.vec2(0),
         1.5,
         (val) => {
             loading.scale = val;
         },
         k.easings.linear
     ).onEnd(() => {
-        loading.destroy();
+        loading.z = -10;
     })
     await k.wait(0.75);
 
@@ -270,6 +270,21 @@ k.scene("game", async () => {
             k.rgb(38, 112, 215),
             k.vec2(LEFT_MARGIN + INFOBAR_WIDTH + (WIDTH - LEFT_MARGIN - INFOBAR_WIDTH)/2 + BUTTON_WIDTH/2, BOTTOM - 8),
         );
+        
+        readyToShipButton.obj.onClick(async () => {
+            loading.z = 100;
+
+            loading.tween(
+                loading.scale,
+                k.vec2(1500),
+                1.5,
+                (val) => {
+                    loading.scale = val;
+                },
+                k.easings.linear
+            )
+            //redirect
+        });
 
         readyToShipButton.obj.z = 20;
 

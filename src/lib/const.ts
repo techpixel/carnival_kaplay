@@ -1,3 +1,4 @@
+import { CharTransform, CharTransformFunc } from "kaplay";
 import { k } from "./kaplay";
 
 export const HEIGHT = k.height();
@@ -58,3 +59,27 @@ export const DECK_Y = BOTTOM + CARD_HEIGHT + SPACER;
 
 export const ACCENT_COLOR = k.rgb(1, 59, 91);
 export const BG_COLOR = k.rgb(20, 34, 37);
+
+export function balatroTextAnim(len: number = 8): CharTransformFunc {
+    return (idx: number, ch: string) => {
+        return {
+            angle: Math.sin((k.time() + idx) / 2) * 1.5 + (idx - (len / 2)),
+            pos: k.vec2(0, Math.sin((k.time() + idx)) + 1.5),
+        } as CharTransform
+    }
+}
+
+export function fourCharacterLift(i: number): CharTransformFunc {
+    return (idx: number, ch: string) => {
+        // use a function like
+        // sin((k.time() + idx) / 2)^i
+        // lift the first character of four
+
+        const lift = -i * Math.sin(1/2 * Math.PI / 2 * (k.time() * -0.75 + idx)) ** 32 + 1;
+
+        return {
+            angle: 0,
+            pos: k.vec2(0, lift),
+        } as CharTransform
+    }
+}

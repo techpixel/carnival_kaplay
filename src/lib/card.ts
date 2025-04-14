@@ -29,7 +29,9 @@ import {
     CARD_HEIGHT,
     CARD_WIDTH,
     BG_COLOR,
-    ACCENT_COLOR
+    ACCENT_COLOR,
+    balatroTextAnim,
+    fourCharacterLift
 } from "./const";
 
 import cardData from '../cards.json';
@@ -60,7 +62,20 @@ export class Card {
         anchorRot: 0,
 
         shadowOffset: k.vec2(5, 5),
+
+        activeAnimations: 0,
     };
+
+    private waitTween(tween: TweenController): Promise<void> {
+        this.flags.activeAnimations++;
+        return new Promise((resolve) => tween.onEnd(() => {
+            this.flags.activeAnimations--;
+            if (this.flags.activeAnimations <= 0) {
+                this.flags.activeAnimations = 0;
+            }
+            resolve()
+        }));
+    }
 
     private createCard(
         frame: number,
@@ -101,12 +116,15 @@ export class Card {
         };
 
         const unfocus = async () => {
+            k.setCursor("default");
+
             await this.fade(k.rgb(255, 255, 255), 1 / 4, k.easings.easeOutExpo);
         }
 
         // this is a really bad workaround - i don't want to have to do the math while it's hovering. but it's fine for now
         this.obj.onHoverUpdate(async () => {
             if (this.game.tutorial.flags.disableCards) return;
+            k.setCursor("pointer");
 
             if (game.flags.currentlyHovering) {
                 if (game.flags.currentlyHovering === this) {
@@ -133,7 +151,7 @@ export class Card {
     }
 
     async move(x: number, y: number, time = 1, easing = k.easings.easeOutSine): Promise<void> {
-        return waitTween(
+        return this.waitTween(
             this.obj.tween(
                 this.obj.pos,
                 k.vec2(x, y),
@@ -145,7 +163,7 @@ export class Card {
     }
 
     async scale(scale: Vec2, time = 1, easing = k.easings.easeOutSine): Promise<void> {
-        return waitTween(
+        return this.waitTween(
             this.obj.tween(
                 this.obj.scale,
                 scale,
@@ -157,7 +175,7 @@ export class Card {
     }
 
     async rotate(angle: number, time = 1, easing = k.easings.easeOutSine): Promise<void> {
-        return waitTween(
+        return this.waitTween(
             this.obj.tween(
                 this.obj.angle,
                 angle,
@@ -436,7 +454,7 @@ export class Hand {
         // move all cards
         return k.vec2(
             this.pos.x + spacing * (slot + 1) + CARD_WIDTH / 2 + CARD_WIDTH * slot,
-            this.pos.y - CARD_HEIGHT / 2 + (slot - len / 2 + 0.5) ** 2,
+            this.pos.y - CARD_HEIGHT / 2 + (slot - Math.floor(len / 2)) ** 2,
         );
     }
 
@@ -570,9 +588,11 @@ export class Button {
         });
 
         this.obj.onHover(async () => {
+            k.setCursor("pointer");
             this.obj.color = this.hoverColor
         })
         this.obj.onHoverEnd(async () => {
+            k.setCursor("default");
             this.obj.color = this.color;
         })
     }
@@ -608,15 +628,6 @@ export class InfoBar {
     public obj: ReturnType<typeof this.createInfoBar>;
 
     public themeColor: Color = k.rgb(3, 107, 164);
-
-    private balatroTextAnim(len: number = 8): CharTransformFunc {
-        return (idx: number, ch: string) => {
-            return {
-                angle: Math.sin((k.time() + idx) / 2) * 1.5 + (idx - (len / 2)),
-                pos: k.vec2(0, Math.sin((k.time() + idx)) + 1.5),
-            } as CharTransform
-        }
-    }
 
     private createInfoBar() {
         return k.add([
@@ -699,7 +710,8 @@ export class InfoBar {
                 color: k.rgb(255, 255, 255),
                 font: "font",
                 letterSpacing: 1.5,
-                transform: this.balatroTextAnim("tutorial".length)
+                // transform: balatroTextAnim("tutorial".length)
+                transform: fourCharacterLift(2)
             })
 
             // goal
@@ -779,7 +791,7 @@ export class InfoBar {
                     align: "left",
                     color: k.rgb(255, 255, 255),
                     font: "font",
-                    transform: this.balatroTextAnim(cardData.name.length)
+                    transform: balatroTextAnim(cardData.name.length)
                 })
 
                 k.drawSprite({
@@ -810,7 +822,7 @@ export class InfoBar {
                     align: "left",
                     color: k.rgb(255, 255, 255),
                     font: "font",
-                    transform: this.balatroTextAnim("card preview".length)
+                    transform: balatroTextAnim("card preview".length)
                 })
             }
 
@@ -830,7 +842,7 @@ export class InfoBar {
                 font: 'font',
                 anchor: "top",
                 pos: multanchor.add((INFOBAR_WIDTH - 32) / 2, PAD),
-                transform: this.balatroTextAnim(4)                
+                transform: balatroTextAnim(4)                
             })
 
             this.drawBox({
@@ -861,7 +873,7 @@ export class InfoBar {
                 font: 'font',
                 anchor: "left",
                 pos: multanchor.add(PAD*2, DOUBLE_PAD*2.5+PAD+13),
-                transform: this.balatroTextAnim(1)
+                transform: balatroTextAnim(1)
             })
 
             k.drawText({
@@ -870,7 +882,7 @@ export class InfoBar {
                 font: 'font',
                 anchor: "left",
                 pos: multanchor.add(INFOBAR_WIDTH - 32 - 80, DOUBLE_PAD*2.5+PAD+12),
-                transform: this.balatroTextAnim(1)
+                transform: balatroTextAnim(1)
             })            
 
             // discards
@@ -907,7 +919,7 @@ export class InfoBar {
                 anchor: "topleft",
                 align: "center",
                 font: "font",
-                transform: this.balatroTextAnim(`${this.game.flags.remainingDiscards}`.length)
+                transform: balatroTextAnim(`${this.game.flags.remainingDiscards}`.length)
             });
         });
     }
@@ -1266,8 +1278,6 @@ export class Shop {
 
 export class Game {
     public flags = {
-        hovering: null as Card | null,
-
         currentlyHovering: null as Card | null,
         remainingDiscards: 0,
         playHand: false,
@@ -1423,6 +1433,101 @@ export class Game {
                 this.flags.mouseHolding = null;
                 await click();
             }
+        });
+
+
+        k.onDraw(async () => {
+            if (!this.flags.currentlyHovering) return;
+            if (this.flags.mouseHolding && this.flags.currentlyHovering !== this.flags.mouseHolding) return;
+            const card = this.flags.currentlyHovering;
+            if (card.flags.activeAnimations > 0) return;
+
+            const width = Math.max(20*(6/11)*card.joker.name.length+4, CARD_WIDTH*1.5);
+
+            console.log(card.joker.name, width);
+
+            let posAnchor;
+            if (card.obj.pos.y > HEIGHT/2) {
+                posAnchor = card.obj.pos.add(k.vec2(0, -16)); 
+            } else {
+                posAnchor = card.obj.pos.add(k.vec2(0, CARD_HEIGHT*2+36)); 
+            }
+
+            // draw data
+            k.drawRect({
+                width,
+                height: 80,
+                anchor: "center",
+                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD+3)),
+                radius: 8,
+                color: k.rgb(134, 146, 141)
+            });
+
+            k.drawRect({
+                width,
+                height: 80,
+                anchor: "center",
+                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD)),
+                radius: 8,
+                color: k.rgb(56, 75, 73),
+                outline: {
+                    color: k.rgb(205, 229, 229),
+                    width: 2,
+                }
+            });
+
+            k.drawText({
+                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD-20)),
+
+                text: card.joker.name,
+                size: 20,
+                anchor: "center",
+                align: "center",
+                color: k.rgb(30, 38, 38),
+                font: "font",
+            });
+
+            k.drawText({
+                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD-24)),
+
+                text: card.joker.name,
+                size: 20,
+                anchor: "center",
+                align: "center",
+                color: k.rgb(240, 255, 255),
+                font: "font",
+                transform: fourCharacterLift(1.5)
+            });            
+
+            k.drawRect({
+                width: width - 8,
+                height: 44,
+                anchor: "top",
+                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD-8)),
+                radius: 6,
+                color: k.rgb(134, 146, 141)
+            })
+
+            k.drawRect({
+                width: width - 8,
+                height: 44,
+                anchor: "top",
+                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD-10)),
+                radius: 6,
+                color: k.rgb(240, 255, 255),
+            })
+
+            k.drawText({
+                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD-8)),
+
+                text: card.joker.description ?? 'uhm... it does something. probably.',
+                size: 12,
+                width: width - 16,
+                anchor: "top",
+                align: "center",
+                color: k.rgb(28, 42, 39),
+                font: "font",
+            })
         });
     }
 }
