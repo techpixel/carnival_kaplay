@@ -101,15 +101,6 @@ k.scene("game", async () => {
             font: "font",
             scale: 1.5
         });
-
-        k.drawSprite({
-            sprite: "lines",
-            pos: k.vec2(0, 0),
-            width: 1000,
-            height: 600,
-            tiled: true,
-            opacity: 0.15,
-        })
     });    
 
     loading.tween(

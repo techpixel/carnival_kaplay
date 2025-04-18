@@ -4,6 +4,9 @@ import kaplay, { Vec2 } from "kaplay";
 export const k = kaplay({
     width: 1000, 
     height: 600,
+    crisp: false,
+    letterbox: true,
+    background: [0, 0, 0, 0],
 });
 
 k.loadRoot("./"); // A good idea for Itch.io publishing later
@@ -26,26 +29,31 @@ k.loadShader(
     "balatro",
     null,
 `#define SPIN_ROTATION -2.0
-#define SPIN_SPEED 3.0
-#define OFFSET vec2(-0.35)
-#define CONTRAST 3.5
-#define LIGTHING 0.4
-#define SPIN_AMOUNT 0.25
-#define PIXEL_FILTER 100745.0
-#define SPIN_EASE 1.0
+#define SPIN_SPEED 2.0
+#define OFFSET vec2(0.0)
+#define COLOUR_1 vec4(0.40784313725490196, 0.6729411764705884, 0.5607843137254902, 1.0)
+#define COLOUR_2 vec4(0.21960784313725487, 0.3623529411764706, 0.30196078431372547, 1.0)
+#define COLOUR_3 vec4(0.2823529411764706, 0.4658823529411765, 0.38823529411764707, 1.0)
+#define CONTRAST 1.0
+#define LIGTHING 0.0
+#define SPIN_AMOUNT 0.0
+#define PIXEL_FILTER 745.0
+#define SPIN_EASE 0.5
 #define PI 3.14159265359
 #define IS_ROTATE false
 
-uniform vec3 SET_COLOR_1;
-uniform vec3 SET_COLOR_2;
-uniform vec3 SET_COLOR_3;
-
-#define COLOUR_1 vec4(SET_COLOR_1/255.0, 1.0)
-#define COLOUR_2 vec4(SET_COLOR_2/255.0, 1.0)
-#define COLOUR_3 vec4(SET_COLOR_3/255.0, 1.0)
+#define SCALE 2.0
+#define DARKEN 0.65
+#define SATURATION 0.9
 
 uniform float iTime;
 uniform vec2 iResolution;
+
+vec4 saturateColor(vec4 color) {
+    float gray = 0.2989 * color.r + 0.5870 * color.g + 0.1140 * color.b;
+    vec3 saturated = -gray * SATURATION + color.rgb * (1.0 + SATURATION);
+    return vec4(clamp(saturated, 0.0, 1.0), color.a);
+}
 
 vec4 effect(vec2 screenSize, vec2 screen_coords) {
     float pixel_size = length(screenSize.xy) / PIXEL_FILTER;
@@ -77,13 +85,15 @@ vec4 effect(vec2 screenSize, vec2 screen_coords) {
     float c2p = max(0.,1. - contrast_mod*abs(paint_res));
     float c3p = 1. - min(1., c1p + c2p);
     float light = (LIGTHING - 0.2)*max(c1p*5. - 4., 0.) + LIGTHING*max(c2p*5. - 4., 0.);
-    return (0.3/CONTRAST)*(COLOUR_1) + (1. - 0.3/CONTRAST)*(COLOUR_1*c1p + COLOUR_2*c2p + vec4(c3p*COLOUR_3.rgb, c3p*COLOUR_1.a));
+    vec4 color = (0.3/CONTRAST)*COLOUR_1 + (1. - 0.3/CONTRAST)*(COLOUR_1*c1p + COLOUR_2*c2p + vec4(c3p*COLOUR_3.rgb, c3p*COLOUR_1.a));
+    
+    return saturateColor(color);
 }
 
 vec4 frag(vec2 pos, vec2 uva, vec4 color, sampler2D tex) {
     vec2 uv = pos/iResolution.xy;
     
-    return effect(iResolution.xy, uv * iResolution.xy);
+    return effect(iResolution.xy, uv * iResolution.xy * vec2(SCALE, SCALE)) * vec4(DARKEN, DARKEN, DARKEN, 1.0);
 }
 `
 )

@@ -31,7 +31,9 @@ import {
     BG_COLOR,
     ACCENT_COLOR,
     balatroTextAnim,
-    fourCharacterLift
+    fourCharacterLift,
+    fixMousePos,
+    getMousePos
 } from "./const";
 
 import cardData from '../cards.json';
@@ -1241,24 +1243,22 @@ export class Game {
 
     constructor() {
         // Card movement
-        k.onMousePress(async (mouse) => {
+        k.onMousePress(async () => {
             const selectedCard = this.flags.currentlyHovering;
 
             if (!selectedCard) return;
 
-            const pos = k.mousePos();
-
-            if (!selectedCard.obj.hasPoint(pos)) return;
+            if (!selectedCard.obj.hasPoint(k.mousePos())) return;
 
             this.flags.mouseHolding = selectedCard;
         });
 
-        k.onMouseMove(async (mouse, delta) => {
+        k.onMouseMove(async (_mouse, delta) => {
             // dragging
             if (!this.flags.mouseHolding) return;
 
             if (this.flags.mouseHolding.obj.tags.includes("dragging")) {
-                this.flags.mouseHolding.obj.pos = mouse;
+                this.flags.mouseHolding.obj.pos = k.mousePos();
 
                 this.flags.mouseHolding.rotate(delta.x / 2, 0.15, k.easings.easeOutExpo)
 
@@ -1266,7 +1266,7 @@ export class Game {
             } else {
                 this.flags.mouseHolding.obj.tag("dragging");
 
-                this.flags.mouseHolding.obj.pos = mouse;
+                this.flags.mouseHolding.obj.pos = k.mousePos();
                 this.flags.mouseHolding.obj.z = 10;
 
                 this.flags.mouseHolding.rotate(delta.x / 2, 0.15, k.easings.easeOutExpo);
@@ -1342,7 +1342,7 @@ export class Game {
             }
         }
 
-        k.onMouseRelease(async (mouse) => {
+        k.onMouseRelease(async () => {
             if (!this.flags.mouseHolding) return;
 
             if (this.flags.mouseHolding.obj.tags.includes("dragging")) {

@@ -1,4 +1,4 @@
-import { CharTransform, CharTransformFunc } from "kaplay";
+import { CharTransform, CharTransformFunc, Vec2 } from "kaplay";
 import { k } from "./kaplay";
 
 export const HEIGHT = k.height();
@@ -82,4 +82,26 @@ export function fourCharacterLift(i: number): CharTransformFunc {
             pos: k.vec2(0, lift),
         } as CharTransform
     }
+}
+
+export function fixMousePos(mouse: Vec2) {
+    // const boundingClientRect = k.canvas.getBoundingClientRect();
+    // return k.vec2(
+    //     (mouse.x - boundingClientRect.left) / boundingClientRect.width * k.width(),
+    //     (mouse.y - boundingClientRect.top) / boundingClientRect.height * k.height()
+    // );
+
+    return mouse;
+}
+
+export function getMousePos() {
+    // const mouse = k.mousePos();
+
+    // const boundingClientRect = k.canvas.getBoundingClientRect();
+    // return k.vec2(
+    //     (mouse.x - boundingClientRect.left) / boundingClientRect.width * k.width(),
+    //     (mouse.y - boundingClientRect.top) / boundingClientRect.height * k.height()
+    // );
+
+    return k.mousePos();
 }
