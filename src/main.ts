@@ -126,29 +126,48 @@ k.scene("game", async () => {
     await k.wait(0.75);
 
     const tutorial = game.tutorial;
-    const drawHand = (await API.hand() as any).hand;
+
+    const handData = await API.hand();
+    const drawHand = handData.hand;
+    
     console.log("draw hand", drawHand);
 
-    for (const joker of drawHand) {
-        const card = new Card(
-            game, 
-            joker, 
-            k.vec2(DECK_X - CARD_WIDTH / 2, DECK_Y - CARD_HEIGHT / 2)
-        );
+    if (handData.action === "existing_hand") {
+        // don't do the draw animation
+        await playerHand.addCardsDirectly(drawHand.map(joker => {
+            const card = new Card(
+                game, 
+                joker, 
+                k.vec2(DECK_X - CARD_WIDTH / 2, DECK_Y - CARD_HEIGHT / 2)
+            );
 
-        Promise.all([
-            (async () => {
-                await card.scale(k.vec2(0, 1.5), 1 / 8, k.easings.easeInSine);
+            card.obj.sprite = "jokers";
+            // card.obj.frame = k.randi(0, 10);
 
-                card.obj.sprite = "jokers";
-                // card.obj.frame = k.randi(0, 10);
+            return card;
+        }));
+    } else {        // draw the hand
+        for (const joker of drawHand) {
+            const card = new Card(
+                game, 
+                joker, 
+                k.vec2(DECK_X - CARD_WIDTH / 2, DECK_Y - CARD_HEIGHT / 2)
+            );
 
-                await card.scale(k.vec2(1.5, 1.5), 1 / 8, k.easings.easeOutExpo);
-            })(),
-            playerHand.addCard(card)
-        ])
+            Promise.all([
+                (async () => {
+                    await card.scale(k.vec2(0, 1.5), 1 / 8, k.easings.easeInSine);
 
-        await k.wait(0.1)
+                    card.obj.sprite = "jokers";
+                    // card.obj.frame = k.randi(0, 10);
+
+                    await card.scale(k.vec2(1.5, 1.5), 1 / 8, k.easings.easeOutExpo);
+                })(),
+                playerHand.addCard(card)
+            ])
+
+            await k.wait(0.1)
+        }
     }
 
     if (game.flags.tutorial) await tutorial.start();

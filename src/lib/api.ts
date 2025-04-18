@@ -1,15 +1,7 @@
-const API_URL = "http://localhost:3000"
+import { HandResponse } from "../../../src/lib/types";
+import { CardInstance } from "./types";
 
-export type JokerData = {
-    id: string;
-    instance_id: string;
-    name: string;
-    enabled: boolean;
-    description: string;
-    tags: string[];
-    conflicting_tags: string[];
-    frameId: number;
-}
+const API_URL = "http://localhost:3000"
 
 type UserPayload = {
     discards: number;
@@ -23,7 +15,7 @@ async function user(): Promise<UserPayload> {
         .catch((error) => console.error(error));
 }
 
-async function hand(): Promise<JokerData[]> {
+async function hand(): Promise<HandResponse> {
     return fetch(`${API_URL}/hand`, {
         method: "POST",
     })
@@ -31,7 +23,7 @@ async function hand(): Promise<JokerData[]> {
         .catch((error) => console.error(error));
 }
 
-async function draw(hand: JokerData[]): Promise<JokerData> {
+async function draw(hand: CardInstance[]): Promise<CardInstance> {
     return fetch(`${API_URL}/draw`, {
         method: "POST",
         headers: {
@@ -56,7 +48,7 @@ async function play(hand: string[]): Promise<string> {
          .catch((error) => console.error(error));
 }
 
-async function discard(indexes: string[]): Promise<JokerData[]> {
+async function discard(indexes: string[]): Promise<CardInstance[]> {
     return fetch(`${API_URL}/redraw`, {
         method: "POST",
         headers: {

@@ -35,7 +35,8 @@ import {
 } from "./const";
 
 import cardData from '../cards.json';
-import { API, JokerData } from "./api";
+import { API } from "./api";
+import { CardInstance } from "./types";
 
 export function randomJoker() {
     const card = cardData.cards[Math.floor(Math.random() * cardData.cards.length)];
@@ -99,7 +100,7 @@ export class Card {
 
     constructor(
         public game: Game,
-        public joker: JokerData,
+        public joker: CardInstance,
         pos: Vec2,
     ) {
         this.obj = this.createCard(joker.frameId, pos);
@@ -344,6 +345,30 @@ export class Hand {
             if (card.obj.angle !== cardRot) {
                 card.rotate(cardRot, 1 / 4, k.easings.easeOutExpo)
             }
+
+            card.obj.z = i / len + this.layerOffset;
+            card.flags.parentSlot = i;
+
+            card.flags.anchor = cardPos;
+            card.flags.anchorRot = cardRot;
+        }
+    }
+
+    async addCardsDirectly(cards: Card[]) {
+        // move cards w/o animation
+        this.cards = cards;
+        const len = this.cards.length;
+
+        // move all cards
+        for (let i = 0; i < len; i++) {
+            const card = this.cards[i];
+
+            const cardPos = this.getCardPos(i);
+            const cardRot = this.getCardRot(i);
+
+            card.obj.pos.x = cardPos.x;
+            card.obj.pos.y = cardPos.y;
+            card.obj.angle = cardRot;
 
             card.obj.z = i / len + this.layerOffset;
             card.flags.parentSlot = i;
@@ -734,100 +759,8 @@ export class InfoBar {
                 letterSpacing: 1.5,
             })
 
-            // card preview
-            const cpanchor = k.vec2(16, 48+24+PAD+64+PAD+THIN_PAD+PAD);
-
-            this.drawBox({
-                width: INFOBAR_WIDTH - 32,
-                height: PAD+20+PAD+96+THIN_PAD+24+PAD,
-                color: BG_COLOR,
-                pos: cpanchor,
-                z: 2,
-            })
-
-            k.drawSprite({
-                sprite: "jokers",
-                frame: 0,
-                color: k.rgb(0, 0, 0),
-                opacity: 0.35,
-                pos: cpanchor.add(k.vec2(PAD, PAD+20+PAD)),
-                anchor: "topleft",
-            })
-
-            this.drawBox({
-                width: CARD_WIDTH,
-                height: 24,
-                pos: cpanchor.add(PAD, PAD+20+PAD+96+THIN_PAD),
-                z: 1
-            });
-
-            this.drawBox({
-                width: 56,
-                height: 24,
-                pos: cpanchor.add(PAD+CARD_WIDTH+THIN_PAD, PAD+20+PAD+96+THIN_PAD),
-                z: 1,
-                color: k.rgb(3, 146, 255),
-            });            
-
-            this.drawBox({
-                width: 56,
-                height: 24,
-                pos: cpanchor.add(INFOBAR_WIDTH-32-PAD-56, PAD+20+PAD+96+THIN_PAD),
-                z: 1,
-                color: k.rgb(255, 68, 68),
-            });                        
-
-            if (this.game.flags.currentlyHovering || this.game.flags.lastSelected) {
-                const currentCard = this.game.flags.currentlyHovering ?? this.game.flags.lastSelected;
-                if (!currentCard) return;
-                const cardData = currentCard.joker;
-
-                k.drawText({
-                    text: cardData.name,
-                    size: 20,
-                    width: INFOBAR_WIDTH - 32,
-                    pos: cpanchor.add(k.vec2(PAD+THIN_PAD, PAD)),
-                    anchor: "topleft",
-                    align: "left",
-                    color: k.rgb(255, 255, 255),
-                    font: "font",
-                    transform: balatroTextAnim(cardData.name.length)
-                })
-
-                k.drawSprite({
-                    sprite: "jokers",
-                    frame: currentCard.obj.frame,
-                    pos: cpanchor.add(k.vec2(PAD, PAD+20+PAD)),
-                    anchor: "topleft",
-                })
-
-                k.drawText({
-                    text: cardData.description ?? 'uhm... it does something. probably.',
-                    size: 16,
-                    width: 120,
-                    // pos: k.vec2(16 + 8 + 72, 96 + 32 + 16 + 8 + 8),
-                    pos: cpanchor.add(k.vec2(PAD+64+PAD, PAD+20+PAD)),
-                    color: k.rgb(255, 255, 255),
-                    anchor: "topleft",
-                    align: "center",
-                    font: "font",
-                })
-            } else {
-                k.drawText({
-                    text: "card preview",
-                    size: 20,
-                    width: INFOBAR_WIDTH - 32,
-                    pos: cpanchor.add(k.vec2(PAD+THIN_PAD, PAD)),
-                    anchor: "topleft",
-                    align: "left",
-                    color: k.rgb(255, 255, 255),
-                    font: "font",
-                    transform: balatroTextAnim("card preview".length)
-                })
-            }
-
             // mult
-            const multanchor = cpanchor.add(0, PAD+96+PAD+THIN_PAD+24+PAD*4.5);
+            const multanchor = g1anchor.add(0, PAD+96+PAD+THIN_PAD);
             this.drawBox({
                 width: INFOBAR_WIDTH - 32,
                 height: PAD+72+PAD,
@@ -1435,39 +1368,37 @@ export class Game {
             }
         });
 
-
-        k.onDraw(async () => {
+        k.add([k.z(10)]).onDraw(async () => {
             if (!this.flags.currentlyHovering) return;
             if (this.flags.mouseHolding && this.flags.currentlyHovering !== this.flags.mouseHolding) return;
             const card = this.flags.currentlyHovering;
             if (card.flags.activeAnimations > 0) return;
 
-            const width = Math.max(20*(6/11)*card.joker.name.length+4, CARD_WIDTH*1.5);
+            const height = THIN_PAD + 12 + THIN_PAD + 48 + PAD + THIN_PAD;
+            const width = Math.max(9*card.joker.name.length+4, CARD_WIDTH*1.5);
 
-            console.log(card.joker.name, width);
-
-            let posAnchor;
+            let posAnchor: Vec2;
             if (card.obj.pos.y > HEIGHT/2) {
-                posAnchor = card.obj.pos.add(k.vec2(0, -16)); 
+                posAnchor = card.obj.pos.add(k.vec2(0, -CARD_HEIGHT*0.75-PAD)); 
             } else {
-                posAnchor = card.obj.pos.add(k.vec2(0, CARD_HEIGHT*2+36)); 
+                posAnchor = card.obj.pos.add(k.vec2(0, CARD_HEIGHT*1.5+PAD*2)); 
             }
 
             // draw data
             k.drawRect({
                 width,
-                height: 80,
-                anchor: "center",
-                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD+3)),
+                height,
+                anchor: "bot",
+                pos: posAnchor.add(k.vec2(0, 3)),
                 radius: 8,
                 color: k.rgb(134, 146, 141)
             });
 
             k.drawRect({
                 width,
-                height: 80,
-                anchor: "center",
-                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD)),
+                height,
+                anchor: "bot",
+                pos: posAnchor,
                 radius: 8,
                 color: k.rgb(56, 75, 73),
                 outline: {
@@ -1477,22 +1408,22 @@ export class Game {
             });
 
             k.drawText({
-                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD-20)),
+                pos: posAnchor.add(k.vec2(0, -6-44)),
 
                 text: card.joker.name,
                 size: 20,
-                anchor: "center",
+                anchor: "bot",
                 align: "center",
                 color: k.rgb(30, 38, 38),
                 font: "font",
             });
 
             k.drawText({
-                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD-24)),
+                pos: posAnchor.add(k.vec2(0, -6-44-4)),
 
                 text: card.joker.name,
                 size: 20,
-                anchor: "center",
+                anchor: "bot",
                 align: "center",
                 color: k.rgb(240, 255, 255),
                 font: "font",
@@ -1502,8 +1433,8 @@ export class Game {
             k.drawRect({
                 width: width - 8,
                 height: 44,
-                anchor: "top",
-                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD-8)),
+                anchor: "bot",
+                pos: posAnchor.add(k.vec2(0, -6+2)),
                 radius: 6,
                 color: k.rgb(134, 146, 141)
             })
@@ -1511,17 +1442,17 @@ export class Game {
             k.drawRect({
                 width: width - 8,
                 height: 44,
-                anchor: "top",
-                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD-10)),
+                anchor: "bot",
+                pos: posAnchor.add(k.vec2(0, -6)),
                 radius: 6,
                 color: k.rgb(240, 255, 255),
             })
 
             k.drawText({
-                pos: posAnchor.add(k.vec2(0, -CARD_HEIGHT-PAD-8)),
+                pos: posAnchor.add(k.vec2(0, -6-44)),
 
                 text: card.joker.description ?? 'uhm... it does something. probably.',
-                size: 12,
+                size: 14,
                 width: width - 16,
                 anchor: "top",
                 align: "center",
